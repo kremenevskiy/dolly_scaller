@@ -1,4 +1,4 @@
-from src.user.service import OperationType
+from src.user.model import OperationType
 
 
 class UserNotFound(Exception):

@@ -1,6 +1,5 @@
 from datetime import datetime
-from typing import Optional
-from sqlalchemy import DateTime, String, func, select
+from sqlalchemy import DateTime, String, func, select, update
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.database import get_db_session
@@ -48,12 +47,12 @@ class UserRepository:
 
         return user.to_model()
 
-    async def get_user_subcription_state(self, user: User) -> UserSubscriptionState:
+    async def get_user_subcription_state(self, user_id: str) -> UserSubscriptionState:
         session = await get_db_session()
 
         subcription = await session.execute(
             select(UserSubscriptionStateDB).
-            where(UserSubscriptionStateDB.user_id == user.user_id),
+            where(UserSubscriptionStateDB.user_id == user_id),
         )
 
         sub = subcription.scalar()
@@ -62,6 +61,15 @@ class UserRepository:
             raise UserNotFound
 
         return sub.to_model()
+
+    async def save_user_sub_state(self, state: UserSubscriptionState):
+        session = await get_db_session()
+
+        stateDB = UserSubscriptionStateDB().from_model(state)
+
+        await session.merge(stateDB)
+        await session.commit()
+
 
 
 class UserDB(Base):
@@ -97,7 +105,9 @@ class UserSubscriptionStateDB(Base):
     start_date: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
-    end_date: Mapped[datetime] = mapped_column()
+    end_date: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True)
+        )
 
     photo_by_promnt_count: Mapped[int] = mapped_column()
     photo_by_image_count: Mapped[int] = mapped_column()
@@ -112,3 +122,13 @@ class UserSubscriptionStateDB(Base):
             photo_by_promnt_count=self.photo_by_promnt_count,
         )
 
+    def from_model(self, model: UserSubscriptionState):
+        self.user_id = model.user_id
+        self.subcription_id = model.subcription_id
+        self.start_date = model.start_date
+        self.end_date = model.end_date
+
+        self.photo_by_promnt_count = model.photo_by_promnt_count
+        self.photo_by_image_count = model.photo_by_image_count
+
+        return self

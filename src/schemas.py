@@ -23,3 +23,16 @@ class CustomModel(BaseModel):
         default_dict = self.model_dump()
 
         return jsonable_encoder(default_dict)
+
+
+class Response(BaseModel):
+    status: bool
+
+
+class OKResponse(Response):
+    status: bool
+
+
+class ErrorResponse(Response):
+    error: str
+    code: str

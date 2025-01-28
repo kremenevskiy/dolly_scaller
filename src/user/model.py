@@ -15,7 +15,7 @@ class User(BaseModel):
     nickname: str
     user_type: UserType
     tg_premium: bool
-    model_max: int
+    models_max: int
 
     started_at: Optional[datetime] = None
 
@@ -33,3 +33,9 @@ class UserSubscriptionState(BaseModel):
 
     photo_by_promnt_count: int
     photo_by_image_count: int
+
+
+class OperationType(Enum):
+    GENERATE_BY_IMAGE = "generate_by_image"
+    GENERATE_BY_PROMNT = "generate_by_prompt"
+    CREATE_MODEL = "create_model"

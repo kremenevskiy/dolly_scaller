@@ -1,7 +1,7 @@
 
 from typing import Optional
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import MetaData, func, select
+from sqlalchemy import Identity, MetaData, Sequence, func, select
 
 
 from src.constants import DB_NAMING_CONVENTION
@@ -25,6 +25,21 @@ class ModelRepository:
 
         return int(count)
 
+    async def create_model(self, model: Model):
+        session = await get_db_session()
+
+        modelDb = ModelDB(
+                name=model.name,
+                user_id=model.user_id,
+                gender=model.gender,
+                link_to_adls=model.link_to_adls,
+                status=model.status,
+                )
+
+        session.add(modelDb)
+
+        await session.commit()
+
 
 class Base(DeclarativeBase):
     metadata = MetaData(naming_convention=DB_NAMING_CONVENTION)
@@ -35,7 +50,9 @@ class Base(DeclarativeBase):
 class ModelDB(Base):
     __tablename__ = "models"
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement="auto")
+    id: Mapped[int] = mapped_column(Identity(),
+                                    primary_key=True,
+                                    )
     name: Mapped[str]
     user_id: Mapped[str]
 

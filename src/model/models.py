@@ -1,5 +1,3 @@
-
-
 from enum import Enum
 from typing import Optional
 from pydantic import BaseModel
@@ -10,13 +8,13 @@ class Gender(Enum):
     FEMALE = 'female'
 
 
-class ModelStatus:
+class ModelStatus(Enum):
     TRAIN_STARTED = "train_started"
     READY = 'ready'
 
 
 class Model(BaseModel):
-    id: int
+    id: Optional[int]
     name: str
     user_id: str
 
