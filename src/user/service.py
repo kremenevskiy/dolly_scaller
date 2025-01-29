@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 
 from src.model import service as model_service
 from src.subcription import service as sub_service
-from src.user.exception import OperationOutOfLimit
+from src.user import exception
 from src.user.model import OperationType, User, UserSubscriptionState
 from src.user.repository import UserRepository
 
@@ -11,6 +11,13 @@ user_repository = UserRepository()
 
 async def create_new_user(user: User) -> None:
     await user_repository.create_new_user(user)
+
+
+async def get_user_id_from_username(username: str) -> str:
+    user_id = await user_repository.get_user_id_from_user_username(username)
+    if user_id is None:
+        raise exception.UserNotFound()
+    return user_id
 
 
 async def subcribe_user(user_id: str, sub_id: str):

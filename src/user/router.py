@@ -15,6 +15,12 @@ async def create_new_user(user_request: User):
     return OKResponse(status=True)
 
 
+@user_router.get("/get-id-from-username", response_model=dict)
+async def get_user_id_from_username(username: str):
+    user_id = await service.get_user_id_from_username(username)
+    return {"user_id": user_id}
+
+
 # class SubcribeRequest(BaseModel):
 #     subscribe_id: str
 

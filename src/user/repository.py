@@ -34,6 +34,15 @@ class UserRepository:
             user.models_max,
         )
 
+    @staticmethod
+    async def get_user_id_from_user_username(username: str) -> Optional[str]:
+        query = """
+            SELECT user_id
+            FROM users
+            WHERE username = $1
+        """
+        return await DatabaseManager.fetchval(query, username)
+
     # async def get_user(self, user_id: str) -> User:
     #     session = await get_db_session()
 

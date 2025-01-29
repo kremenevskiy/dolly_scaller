@@ -1,9 +1,11 @@
+from fastapi import HTTPException
+
 from src.user.model import OperationType
 
 
-class UserNotFound(Exception):
-    def __init__(self, *args) -> None:
-        self.message = 'User not found'
+class UserNotFound(HTTPException):
+    def __init__(self):
+        super().__init__(status_code=404, detail="User not found")
 
 
 class OperationOutOfLimit(Exception):
