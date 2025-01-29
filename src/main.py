@@ -8,6 +8,7 @@ from starlette.middleware.cors import CORSMiddleware
 from src import database
 from src.config import app_configs, settings
 from src.model.router import model_router
+from src.subscription_details.router import subscription_router
 from src.user.router import user_router
 
 
@@ -40,6 +41,7 @@ if settings.ENVIRONMENT.is_deployed:
 
 app.include_router(user_router)
 app.include_router(model_router)
+app.include_router(subscription_router)
 
 
 @app.get("/healthcheck", include_in_schema=False)

@@ -2,7 +2,6 @@ from typing import Optional
 
 from src.database import DatabaseManager
 from src.user import model
-from src.user.exception import UserNotFound
 
 
 class UserRepository:
