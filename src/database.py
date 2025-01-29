@@ -1,94 +1,65 @@
-from typing import Any
+import asyncpg
 
-from sqlalchemy import (
-    CursorResult,
-    Insert,
-    MetaData,
-    Select,
-    Update,
-)
-from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine, session
-from sqlalchemy.orm import DeclarativeBase
-
-from src.config import settings
-from src.constants import DB_NAMING_CONVENTION
-
-DATABASE_URL = str(settings.DATABASE_ASYNC_URL)
+from src import config
 
 
-class Base(DeclarativeBase):
-    metadata = MetaData(naming_convention=DB_NAMING_CONVENTION)
+class DatabaseManager:
+    pool: asyncpg.Pool | None = None
 
-    pass
+    @classmethod
+    async def init_pool(cls) -> None:
+        cls.pool = await asyncpg.create_pool(
+            host=config.DatabaseConf.host,
+            database=config.DatabaseConf.db_name,
+            user=config.DatabaseConf.db_user,
+            password=config.DatabaseConf.db_password,
+            port=config.DatabaseConf.db_port,
+            ssl="require",  # Adjust SSL settings if needed
+            min_size=1,  # Minimum number of connections
+            max_size=2,  # Maximum number of connections
+        )
 
+    @classmethod
+    async def close_pool(cls) -> None:
+        if cls.pool:
+            await cls.pool.close()
 
-engine = create_async_engine(
-    DATABASE_URL,
-    pool_size=settings.DATABASE_POOL_SIZE,
-    pool_recycle=settings.DATABASE_POOL_TTL,
-    pool_pre_ping=settings.DATABASE_POOL_PRE_PING,
-)
+    @classmethod
+    async def execute(cls, query: str, *args):
+        """
+        Execute a query without returning results (e.g., INSERT, UPDATE).
+        """
+        if not cls.pool:
+            raise RuntimeError("Database pool is not initialized.")
+        async with cls.pool.acquire() as connection:
+            await connection.execute(query, *args)
 
-async def fetch_one(
-    select_query: Select | Insert | Update,
-    connection: AsyncConnection | None = None,
-    commit_after: bool = False,
-) -> dict[str, Any] | None:
-    if not connection:
-        async with engine.connect() as connection:
-            cursor = await _execute_query(select_query, connection, commit_after)
-            return cursor.first()._asdict() if cursor.rowcount > 0 else None
+    @classmethod
+    async def fetchval(cls, query: str, *args):
+        """
+        Fetch a single value (e.g., SELECT column FROM ...).
+        """
+        if not cls.pool:
+            raise RuntimeError("Database pool is not initialized.")
+        async with cls.pool.acquire() as connection:
+            return await connection.fetchval(query, *args)
 
-    cursor = await _execute_query(select_query, connection, commit_after)
-    return cursor.first()._asdict() if cursor.rowcount > 0 else None
+    @classmethod
+    async def fetchrow(cls, query: str, *args):
+        """
+        Fetch a single row.
+        """
+        if not cls.pool:
+            raise RuntimeError("Database pool is not initialized.")
+        async with cls.pool.acquire() as connection:
+            return await connection.fetchrow(query, *args)
 
-
-async def fetch_all(
-    select_query: Select | Insert | Update,
-    connection: AsyncConnection | None = None,
-    commit_after: bool = False,
-) -> list[dict[str, Any]]:
-    if not connection:
-        async with engine.connect() as connection:
-            cursor = await _execute_query(select_query, connection, commit_after)
-            return [r._asdict() for r in cursor.all()]
-
-    cursor = await _execute_query(select_query, connection, commit_after)
-    return [r._asdict() for r in cursor.all()]
-
-
-async def execute(
-    query: Insert | Update,
-    connection: AsyncConnection | None = None,
-    commit_after: bool = False,
-) -> None:
-    if not connection:
-        async with engine.connect() as connection:
-            await _execute_query(query, connection, commit_after)
-            return
-
-    await _execute_query(query, connection, commit_after)
-
-
-async def _execute_query(
-    query: Select | Insert | Update,
-    connection: AsyncConnection,
-    commit_after: bool = False,
-) -> CursorResult:
-    result = await connection.execute(query)
-    if commit_after:
-        await connection.commit()
-
-    return result
-
-
-async def get_db_connection() -> AsyncConnection:
-    connection = await engine.connect()
-    try:
-        yield connection
-    finally:
-        await connection.close()
-
-
-async def get_db_session() -> AsyncSession:
-    return AsyncSession(engine)
+    @classmethod
+    async def fetch(cls, query: str, *args):
+        """
+        Fetch multiple rows.
+        """
+        if not cls.pool:
+            raise RuntimeError("Database pool is not initialized.")
+        async with cls.pool.acquire() as connection:
+            return await connection.fetch(query, *args)

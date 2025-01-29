@@ -1,9 +1,23 @@
+import os
+from dataclasses import dataclass
 from typing import Any
 
+from dotenv import load_dotenv
 from pydantic import PostgresDsn, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.constants import Environment
+
+load_dotenv(".env", override=True)
+
+
+@dataclass(frozen=True)
+class DatabaseConf:
+    host: str = os.environ["DB_HOST"]
+    db_name: str = os.environ["DB_NAME"]
+    db_user: str = os.environ["DB_USER"]
+    db_password: str = os.environ["DB_PASSWORD"]
+    db_port: int = int(os.environ["DB_PORT"])
 
 
 class CustomBaseSettings(BaseSettings):

@@ -1,7 +1,8 @@
-from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel, Field
+import datetime
 from enum import Enum
+from typing import Optional
+
+from pydantic import BaseModel, Field
 
 
 class UserType(str, Enum):
@@ -11,13 +12,19 @@ class UserType(str, Enum):
 
 
 class User(BaseModel):
-    user_id: str = Field(min_length=1, max_length=1000)
-    nickname: str
-    user_type: UserType
+    user_id: str
+
+    username: str
+    user_first_name: str
+    user_last_name: str
     tg_premium: bool
+
+    user_type: UserType
+
+    models_created: int
     models_max: int
 
-    started_at: Optional[datetime] = None
+    date_joined: datetime.datetime | None = None
 
 
 class UserResponse(BaseModel):
