@@ -1,23 +1,21 @@
-
 from typing import Optional
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import Identity, MetaData, Sequence, func, select
 
+from sqlalchemy import Identity, MetaData, Sequence, func, select
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from src.constants import DB_NAMING_CONVENTION
-from src.database import get_db_session
 from src.model.models import Gender, Model, ModelStatus
 
 
 class ModelRepository:
     async def get_user_model_count(self, user_id: str) -> int:
-
         session = await get_db_session()
 
         val = await session.execute(
-            select(func.count(ModelDB.user_id)).
-            group_by(ModelDB.user_id).where(ModelDB.user_id == user_id)
-            )
+            select(func.count(ModelDB.user_id))
+            .group_by(ModelDB.user_id)
+            .where(ModelDB.user_id == user_id)
+        )
 
         count = val.scalar()
         if count is None:
@@ -29,12 +27,12 @@ class ModelRepository:
         session = await get_db_session()
 
         modelDb = ModelDB(
-                name=model.name,
-                user_id=model.user_id,
-                gender=model.gender,
-                link_to_adls=model.link_to_adls,
-                status=model.status,
-                )
+            name=model.name,
+            user_id=model.user_id,
+            gender=model.gender,
+            link_to_adls=model.link_to_adls,
+            status=model.status,
+        )
 
         session.add(modelDb)
 
@@ -50,9 +48,10 @@ class Base(DeclarativeBase):
 class ModelDB(Base):
     __tablename__ = "models"
 
-    id: Mapped[int] = mapped_column(Identity(),
-                                    primary_key=True,
-                                    )
+    id: Mapped[int] = mapped_column(
+        Identity(),
+        primary_key=True,
+    )
     name: Mapped[str]
     user_id: Mapped[str]
 
@@ -63,11 +62,11 @@ class ModelDB(Base):
 
     def to_model(self) -> Model:
         return Model(
-                id=self.id,
-                name=self.name,
-                user_id=self.user_id,
-                gender=self.gender,
-                link_to_adls=self.link_to_adls,
-                status=self.status,
-                photo_info=self.photo_info,
-                )
+            id=self.id,
+            name=self.name,
+            user_id=self.user_id,
+            gender=self.gender,
+            link_to_adls=self.link_to_adls,
+            status=self.status,
+            photo_info=self.photo_info,
+        )

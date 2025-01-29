@@ -5,14 +5,17 @@ import sentry_sdk
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
+from src import database
 from src.config import app_configs, settings
-from src.user.router import user_router
 from src.model.router import model_router
+from src.user.router import user_router
 
 
 @asynccontextmanager
 async def lifespan(_application: FastAPI) -> AsyncGenerator:
     # Startup
+    await database.DatabaseManager.init_pool()
+    print("✅ Database connection pool initialized")
     yield
     # Shutdown
 

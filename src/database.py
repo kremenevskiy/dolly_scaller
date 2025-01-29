@@ -14,7 +14,7 @@ class DatabaseManager:
             user=config.DatabaseConf.db_user,
             password=config.DatabaseConf.db_password,
             port=config.DatabaseConf.db_port,
-            ssl="require",  # Adjust SSL settings if needed
+            ssl=None,  # Adjust SSL settings if needed
             min_size=1,  # Minimum number of connections
             max_size=2,  # Maximum number of connections
         )

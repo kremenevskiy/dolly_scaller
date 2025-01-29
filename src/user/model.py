@@ -14,15 +14,15 @@ class UserType(str, Enum):
 class User(BaseModel):
     user_id: str
 
-    username: str
-    user_first_name: str
-    user_last_name: str
+    username: str | None
+    user_first_name: str | None
+    user_last_name: str | None
     tg_premium: bool
 
     user_type: UserType
 
-    models_created: int
-    models_max: int
+    models_created: int = 0
+    models_max: int = 0
 
     date_joined: datetime.datetime | None = None
 
@@ -35,8 +35,8 @@ class UserSubscriptionState(BaseModel):
     user_id: str
     subcription_id: str
 
-    start_date: datetime
-    end_date: datetime
+    start_date: datetime.datetime
+    end_date: datetime.datetime
 
     photo_by_promnt_count: int
     photo_by_image_count: int
