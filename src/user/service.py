@@ -20,6 +20,11 @@ async def get_user_id_from_username(username: str) -> str:
     return user_id
 
 
+async def add_user_to_whitelist(username: str) -> None:
+    user_id = await get_user_id_from_username(username=username)
+    await user_repository.add_user_to_whitelist(user_id)
+
+
 async def subcribe_user(user_id: str, sub_id: str):
     subcription = await sub_service.get_subcription(sub_id)
 

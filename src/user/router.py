@@ -15,10 +15,10 @@ async def create_new_user(user_request: User):
     return OKResponse(status=True)
 
 
-@user_router.get("/get-id-from-username", response_model=dict)
-async def get_user_id_from_username(username: str):
-    user_id = await service.get_user_id_from_username(username)
-    return {"user_id": user_id}
+@user_router.get("/add-to-whitelist", response_model=OKResponse)
+async def add_user_to_whitelist(username: str):
+    await service.add_user_to_whitelist(username=username)
+    return OKResponse(status=True)
 
 
 # class SubcribeRequest(BaseModel):

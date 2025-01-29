@@ -1,13 +1,13 @@
 from typing import Optional
 
 from src.database import DatabaseManager
+from src.user import model
 from src.user.exception import UserNotFound
-from src.user.model import User, UserSubscriptionState, UserType
 
 
 class UserRepository:
     @staticmethod
-    async def create_new_user(user: User) -> None:
+    async def create_new_user(user: model.User) -> None:
         query = """
             INSERT INTO users (user_id, username, user_first_name, user_last_name,
                                 tg_premium, user_type, models_created, models_max)
@@ -42,6 +42,15 @@ class UserRepository:
             WHERE username = $1
         """
         return await DatabaseManager.fetchval(query, username)
+
+    @staticmethod
+    async def add_user_to_whitelist(user_id: str) -> None:
+        query = """
+            UPDATE users
+            SET user_type = $1
+            WHERE user_id = $2
+        """
+        await DatabaseManager.execute(query, model.UserType.WHITELISTED.value, user_id)
 
     # async def get_user(self, user_id: str) -> User:
     #     session = await get_db_session()
