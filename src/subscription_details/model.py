@@ -1,6 +1,13 @@
 import datetime
+import enum
 
 from pydantic import BaseModel
+
+
+class SubscriptionType(enum.Enum):
+    MONTHLY = 'monthly'
+    MODELS = 'models'
+    GENERATIONS = 'generations'
 
 
 class Subscription(BaseModel):
@@ -19,15 +26,15 @@ class Subscription(BaseModel):
     @classmethod
     def from_row(cls, row):
         return cls(
-            id=row["id"],
-            subscription_name=row["subscription_name"],
-            subscription_type=row["subscription_type"],
-            cost_rubles=row["cost_rubles"],
-            cost_stars=row["cost_stars"],
-            duration=row["duration"],
-            start_date=row["start_date"],
-            end_date=row["end_date"],
-            models_count=row["models_count"],
-            photos_by_prompt_count=row["photos_by_prompt_count"],
-            photos_by_image_count=row["photos_by_image_count"],
+            id=row['id'],
+            subscription_name=row['subscription_name'],
+            subscription_type=row['subscription_type'],
+            cost_rubles=row['cost_rubles'],
+            cost_stars=row['cost_stars'],
+            duration=row['duration'],
+            start_date=row['start_date'],
+            end_date=row['end_date'],
+            models_count=row['models_count'],
+            photos_by_prompt_count=row['photos_by_prompt_count'],
+            photos_by_image_count=row['photos_by_image_count'],
         )

@@ -18,81 +18,138 @@ asyncpg = "^0.29.0"
 uvicorn = {extras = ["standard"], version = "^0.30.1"}
 sentry-sdk = "^2.5.1"
 sqlalchemy = {extras = ["asyncio"], version = "^2.0.30"}
+ruff = "^0.9.3"
+mypy = "^1.14.1"
 
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.4.8"
-flake8 = "5.0.4"
-black = "23.9.1"
-isort = "5.12.0"
-mypy = "1.6.0"
-Flake8-pyproject = "1.2.3"
-pre-commit = "3.4.0"
-
-[tool.poetry.group.prod.dependencies]
-gunicorn = "^22.0.0"
-python-json-logger = "^2.0.7"
-prometheus-client = "^0.20.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.isort]
-line_length = 100
-lines_before_imports = 2
-lines_after_imports = 2
-multi_line_output = 3
-force_grid_wrap = 2
-lines_between_sections = 1
-include_trailing_comma = true
-use_parentheses = true
-treat_all_comments_as_code = true
-split_on_trailing_comma = true
-combine_as_imports = true
-
 [tool.black]
 line-length = 100
 skip-string-normalization = true
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-  | data
-)/
+target-version = ['py310']
+include = '\.py?$'
+force-exclude = '''
+(
+  /(
+      \.eggs         
+    | \.git          
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | \venv
+    | _build
+    | buck-out
+    | build
+    | dist
+  )/
+)
 '''
 
-# linters
-[tool.flake8]
-max-line-length = 100
-max-complexity = 18
-ignore = ['E203', 'E266', 'E704', 'W503', 'B905', 'B907']
-select = ['B', 'C', 'E', 'F', 'W', 'T4', 'B9']
-exclude = ['migrations', 'data', '.venv']
+[tool.ruff]
+line-length = 100
+# Assume Python 3.11
+target-version = "py311"
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "pypackages",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+    ".ipynb",
+]
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+docstring-code-format = true
+
+[tool.ruff.lint]
+
+select = ["ALL"]
+
+
+ignore = [
+    "D100", # Missing docstring in public module
+    "D101", # Missing docstring in public class
+    "D102", # Missing docstring in public methods
+    "D103", # Missing docstring in public function
+    "D104", # Missing docstring in public package (__init__.py)
+    "D107", # Missing docstring in `__init__`Ruff
+    "D401", # First line of docstring should be in imperative mood
+    "D407", # Missing dashed underline after section ("Args")
+
+    "ANN002", # Missing type annotation for `*args`
+    "ANN003", # Missing type annotation for `*kwargs`
+    "ANN202", # Missing return type annotation for private function
+    "ANN204", # Missing return type annotation for special method `__init__`
+    
+
+    "COM812", # Trailing comma missing
+
+    "TRY003", # Avoid specifying long messages outside the exception class
+    "TRY300", # Consider moving this statement to an `else` block
+
+
+    "UP035", # Import from `collections.abc` instead (from typing import Callable)
+
+    "EM101", # Exception must not use a string literal, assign to variable first
+    "EM102", # Exception must not use an f-string literal, assign to variable first
+
+    "E501", # Line too long (124 > 100)
+
+    "S104", # hardcoded-bind-all-interfaces
+    "S301", # `pickle` and modules that wrap it can be unsafe when used to deserialize untrusted data, possible security issue
+    "S310", # Audit URL open for permitted schemes. Allowing use of `file:` or custom schemes is often unexpected.
+    "S311", # Standard pseudo-random generators are not suitable for cryptographic purposes
+    "S324", # Probable use of insecure hash functions in `hashlib`: `md5`
+    "S603", # `subprocess` call: check for execution of untrusted
+    
+    "PD901", # Avoid using the generic variable name `df` for DataFrames
+    
+    "RUF001", # ambiguous-unicode-character-string (RUF001)
+    "RUF003", # ambiguous-unicode-character-comment
+
+    "N802", # Function name should be lowercase
+
+    "DTZ005", # call-datetime-now-without-tzinfo
+
+    "Q001", # Double quote multiline found but single quotes preferred
+
+    "TD003", # Missing issue link on the line following this
+
+    "FIX002", # Line contains TODO, consider resolving the issue
+    
+    "PLR0913", # Too many arguments in function definition (6 > 5)
+
+    "FBT001", # Boolean arguments in functions
+    "FBT002", # Boolean arguments in functions
+   
+]
+
+[tool.ruff.lint.flake8-quotes]
+docstring-quotes = "double"
+inline-quotes = "single"
+multiline-quotes = "single"
 
 [tool.mypy]
 ignore_missing_imports = true
-disallow_untyped_defs = true
-check_untyped_defs = true
-warn_redundant_casts = true
-strict_optional = true
-plugins = ['pydantic.mypy']
-
-[tool.pydantic-mypy]
-init_forbid_extra = true
-init_typed = true
-warn_required_dynamic_aliases = true
-
-[[tool.mypy.overrides]]
-module = 'tests.*'
 disallow_untyped_defs = false
-check_untyped_defs = false
-strict_optional = false
+# check_untyped_defs = false  # Disable checking of untyped function bodies

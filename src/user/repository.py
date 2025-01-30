@@ -1,3 +1,4 @@
+import json
 from typing import Optional
 
 from src.database import DatabaseManager
@@ -51,73 +52,60 @@ class UserRepository:
         """
         await DatabaseManager.execute(query, model.UserType.WHITELISTED.value, user_id)
 
-    # async def get_user(self, user_id: str) -> User:
-    #     session = await get_db_session()
+    @staticmethod
+    async def save_user_subscription(user_subscription: model.UserSubscription) -> None:
+        deactivate_query = """
+            UPDATE user_subscriptions
+            SET is_active = FALSE
+            WHERE user_id = $1;
+        """
 
-    #     res = await session.execute(select(UserDB).where(UserDB.id == user_id))
+        await DatabaseManager.execute(deactivate_query, user_subscription.user_id)
 
-    #     user = res.scalar()
-    #     if user is None:
-    #         raise UserNotFound
+        # Step 2: Insert the new subscription as active
+        insert_query = """
+            INSERT INTO user_subscriptions (user_id, subscription_id, start_date, end_date,
+                                            photos_by_prompt_left, photos_by_image_left, is_active)
+            VALUES ($1, $2, $3, $4, $5, $6, TRUE);
+        """
 
-    #     return user.to_model()
+        await DatabaseManager.execute(
+            insert_query,
+            user_subscription.user_id,
+            user_subscription.subscription_id,
+            user_subscription.start_date,
+            user_subscription.end_date,
+            user_subscription.photos_by_prompt_left,
+            user_subscription.photos_by_image_left,
+        )
 
-    # async def get_user_subcription_state(self, user_id: str) -> UserSubscriptionState:
-    #     session = await get_db_session()
+    @staticmethod
+    async def add_generations_to_active_subscription(
+        user_id: str, photos_by_prompt: int, photos_by_image: int
+    ) -> None:
+        query = """
+            UPDATE user_subscriptions
+            SET photos_by_prompt_left = photos_by_prompt_left + $1,
+                photos_by_image_left = photos_by_image_left + $2
+            WHERE user_id = $3 AND is_active = TRUE;
+        """
+        await DatabaseManager.execute(query, photos_by_prompt, photos_by_image, user_id)
 
-    #     subcription = await session.execute(
-    #         select(UserSubscriptionStateDB).where(
-    #             UserSubscriptionStateDB.user_id == user_id
-    #         ),
-    #     )
-
-    #     sub = subcription.scalar()
-
-    #     if sub is None:
-    #         raise UserNotFound
-
-    #     return sub.to_model()
-
-    # async def save_user_sub_state(self, state: UserSubscriptionState):
-    #     session = await get_db_session()
-
-    #     stateDB = UserSubscriptionStateDB().from_model(state)
-
-    #     await session.merge(stateDB)
-    #     await session.commit()
+    @staticmethod
+    async def increase_user_models_limit(user_id: str, models_count: int) -> None:
+        query = """
+            UPDATE users
+            SET models_max = COALESCE(models_max, 0) + $1
+            WHERE user_id = $2;
+        """
+        await DatabaseManager.execute(query, models_count, user_id)
 
 
-# class UserSubscriptionStateDB(Base):
-#     __tablename__ = "user_subcription"
-
-#     user_id: Mapped[str] = mapped_column(primary_key=True)
-#     subcription_id: Mapped[str] = mapped_column()
-
-#     start_date: Mapped[datetime] = mapped_column(
-#         DateTime(timezone=True), server_default=func.now()
-#     )
-#     end_date: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-
-#     photo_by_promnt_count: Mapped[int] = mapped_column()
-#     photo_by_image_count: Mapped[int] = mapped_column()
-
-#     def to_model(self) -> UserSubscriptionState:
-#         return UserSubscriptionState(
-#             user_id=self.user_id,
-#             subcription_id=self.subcription_id,
-#             start_date=self.start_date,
-#             end_date=self.end_date,
-#             photo_by_image_count=self.photo_by_image_count,
-#             photo_by_promnt_count=self.photo_by_promnt_count,
-#         )
-
-#     def from_model(self, model: UserSubscriptionState):
-#         self.user_id = model.user_id
-#         self.subcription_id = model.subcription_id
-#         self.start_date = model.start_date
-#         self.end_date = model.end_date
-
-#         self.photo_by_promnt_count = model.photo_by_promnt_count
-#         self.photo_by_image_count = model.photo_by_image_count
-
-#         return self
+class PaymentRepository:
+    @staticmethod
+    async def save_payment(user_id: str, payment_details: dict) -> None:
+        query = """
+            INSERT INTO payments (user_id, payment_data)
+            VALUES ($1, $2);
+        """
+        await DatabaseManager.execute(query, user_id, json.dumps(payment_details))

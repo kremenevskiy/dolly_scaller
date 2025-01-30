@@ -1,15 +1,15 @@
-from datetime import UTC, datetime, timedelta
+import datetime
 
 from src.model import service as model_service
-from src.subcription import service as sub_service
-from src.user import exception
-from src.user.model import OperationType, User, UserSubscriptionState
-from src.user.repository import UserRepository
+from src.subscription_details import model as subscription_details_model
+from src.subscription_details import service as subscription_details_service
+from src.user import exception, model
+from src.user.repository import PaymentRepository, UserRepository
 
 user_repository = UserRepository()
 
 
-async def create_new_user(user: User) -> None:
+async def create_new_user(user: model.User) -> None:
     await user_repository.create_new_user(user)
 
 
@@ -25,24 +25,45 @@ async def add_user_to_whitelist(username: str) -> None:
     await user_repository.add_user_to_whitelist(user_id)
 
 
-async def subcribe_user(user_id: str, sub_id: str):
-    subcription = await sub_service.get_subcription(sub_id)
-
-    end_date = datetime.now(UTC) + timedelta(seconds=subcription.duration)
-
-    state = UserSubscriptionState(
-        user_id=user_id,
-        subcription_id=sub_id,
-        start_date=datetime.now(UTC),
-        end_date=end_date,
-        photo_by_promnt_count=subcription.photo_by_prompt_limit,
-        photo_by_image_count=subcription.photo_by_image_limit,
+async def subscribe_user(user_id: str, subscription_id: int) -> None:
+    subscription = await subscription_details_service.get_subscription_details(
+        subscription_id=subscription_id
     )
 
-    await user_repository.save_user_sub_state(state)
+    # TODO: Проверить что если уже есть положить в delayed
+
+    if subscription.subscription_type == subscription_details_model.SubscriptionType.MONTHLY.value:
+        new_user_subscription = model.UserSubscription(
+            user_id=user_id,
+            subscription_id=subscription_id,
+            start_date=datetime.datetime.now(),
+            end_date=datetime.datetime.now() + datetime.timedelta(days=subscription.duration),
+            photos_by_prompt_left=subscription.photos_by_prompt_count,
+            photos_by_image_left=subscription.photos_by_image_count,
+        )
+        await user_repository.save_user_subscription(new_user_subscription)
+
+    elif (
+        subscription.subscription_type
+        == subscription_details_model.SubscriptionType.GENERATIONS.value
+    ):
+        # Add generations to active subscription
+        await user_repository.add_generations_to_active_subscription(
+            user_id,
+            photos_by_prompt=subscription.photos_by_prompt_count,
+            photos_by_image=subscription.photos_by_image_count,
+        )
+
+    elif subscription.subscription_type == subscription_details_model.SubscriptionType.MODELS.value:
+        # Increase max models count for user
+        await user_repository.increase_user_models_limit(user_id, subscription.models_count)
 
 
-async def update_sub_state(user: User, operation: OperationType) -> None:
+async def store_user_payment(user_id: str, payment_details: dict) -> None:
+    await PaymentRepository.save_payment(user_id, payment_details)
+
+
+async def update_sub_state(user: model.User, operation: model.OperationType) -> None:
     user_sub_state = await user_repository.get_user_subcription_state(user.user_id)
 
     if operation == OperationType.GENERATE_BY_IMAGE:

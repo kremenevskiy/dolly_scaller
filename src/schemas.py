@@ -7,9 +7,9 @@ from pydantic import BaseModel, ConfigDict
 
 def datetime_to_gmt_str(dt: datetime) -> str:
     if not dt.tzinfo:
-        dt = dt.replace(tzinfo=ZoneInfo("UTC"))
+        dt = dt.replace(tzinfo=ZoneInfo('UTC'))
 
-    return dt.strftime("%Y-%m-%dT%H:%M:%S%z")
+    return dt.strftime('%Y-%m-%dT%H:%M:%S%z')
 
 
 class CustomModel(BaseModel):
