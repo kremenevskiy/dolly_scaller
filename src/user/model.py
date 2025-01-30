@@ -26,6 +26,20 @@ class User(BaseModel):
 
     date_joined: datetime.datetime | None = None
 
+    @classmethod
+    def from_row(cls, row):
+        return cls(
+            user_id=row['user_id'],
+            username=row.get('username'),
+            user_first_name=row.get('user_first_name'),
+            user_last_name=row.get('user_last_name'),
+            tg_premium=row['tg_premium'],
+            user_type=UserType(row['user_type']),
+            models_created=row.get('models_created', 0),
+            models_max=row.get('models_max', 0),
+            date_joined=row.get('date_joined'),
+        )
+
 
 class UserSubscription(BaseModel):
     user_id: str

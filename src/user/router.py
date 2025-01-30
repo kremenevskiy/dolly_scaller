@@ -1,28 +1,43 @@
 from fastapi import APIRouter
-from pydantic import BaseModel
 
 from src.model import service as model_service
 from src.schemas import OKResponse
-from src.user import service
-from src.user.model import User, UserResponse
+from src.user import model, service
 
-user_router = APIRouter(prefix="/user")
+user_router = APIRouter(prefix='/user')
 
 
-@user_router.post("/create-new-user", response_model=OKResponse)
-async def create_new_user(user_request: User):
+@user_router.post('/create-new-user')
+async def create_new_user(user_request: model.User) -> OKResponse:
     await service.create_new_user(user_request)
     return OKResponse(status=True)
 
 
-@user_router.get("/add-to-whitelist", response_model=OKResponse)
-async def add_user_to_whitelist(username: str):
+@user_router.get('/add-to-whitelist')
+async def add_user_to_whitelist(username: str) -> OKResponse:
     await service.add_user_to_whitelist(username=username)
     return OKResponse(status=True)
 
 
-# class SubcribeRequest(BaseModel):
-#     subscribe_id: str
+@user_router.post('/{user_id}/buy-subscription/{subscription_id}')
+async def user_buy_subscription(user_id: str, subscription_id: int) -> OKResponse:
+    await service.subscribe_user(
+        user_id=user_id,
+        subscription_id=subscription_id,
+    )
+    return OKResponse(status=True)
+
+
+@user_router.post('/{user_id}/add-payment-info')
+async def user_add_payment_info(
+    user_id: str,
+    payment_details: model.PaymentDetails,
+) -> OKResponse:
+    await service.store_user_payment(
+        user_id=user_id,
+        payment_details=payment_details.model_dump(),
+    )
+    return OKResponse(status=True)
 
 
 # class UserCountResponse(OKResponse):
@@ -37,10 +52,3 @@ async def add_user_to_whitelist(username: str):
 #         status=True,
 #         models_count=count,
 #     )
-
-
-# @user_router.post("/{user_id}/subcribe")
-# async def subcribe_user(user_id: str, req: SubcribeRequest):
-#     await service.subcribe_user(user_id, req.subscribe_id)
-
-#     return OKResponse(status=True)

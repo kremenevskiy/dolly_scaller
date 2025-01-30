@@ -35,7 +35,19 @@ class UserRepository:
         )
 
     @staticmethod
-    async def get_user_id_from_user_username(username: str) -> Optional[str]:
+    async def get_user_by_id(user_id: str) -> model.User | None:
+        query = """
+            SELECT user_id, username, user_first_name, user_last_name, tg_premium,
+                user_type, models_created, models_max, date_joined
+            FROM users
+            WHERE user_id = $1;
+        """
+        row = await DatabaseManager.fetchrow(query, user_id)
+
+        return model.User.from_row(row) if row else None
+
+    @staticmethod
+    async def get_user_id_from_user_username(username: str) -> str | None:
         query = """
             SELECT user_id
             FROM users
@@ -99,6 +111,59 @@ class UserRepository:
             WHERE user_id = $2;
         """
         await DatabaseManager.execute(query, models_count, user_id)
+
+    @staticmethod
+    async def get_active_user_subscription(user_id: str) -> model.UserSubscription | None:
+        query = """
+            SELECT id, subscription_id, user_id, start_date, end_date, 
+                   photos_by_prompt_left, photos_by_image_left, is_active
+            FROM user_subscriptions
+            WHERE user_id = $1 AND is_active = TRUE
+            LIMIT 1;
+        """
+        row = await DatabaseManager.fetchrow(query, user_id)
+
+        return (
+            model.UserSubscription(
+                id=row['id'],
+                subscription_id=row['subscription_id'],
+                user_id=row['user_id'],
+                start_date=row['start_date'],
+                end_date=row['end_date'],
+                photos_by_prompt_left=row['photos_by_prompt_left'],
+                photos_by_image_left=row['photos_by_image_left'],
+                is_active=row['is_active'],
+            )
+            if row
+            else None
+        )
+
+    @staticmethod
+    async def update_user_subscription(
+        user_subscription: model.UserSubscription, user: model.User, update_models: bool = False
+    ) -> None:
+        # Update subscription details
+        update_subscription_query = """
+            UPDATE user_subscriptions
+            SET photos_by_prompt_left = $1,
+                photos_by_image_left = $2
+            WHERE user_id = $3 AND is_active = TRUE;
+        """
+        await DatabaseManager.execute(
+            update_subscription_query,
+            user_subscription.photos_by_prompt_left,
+            user_subscription.photos_by_image_left,
+            user_subscription.user_id,
+        )
+
+        if update_models:
+            # Update user details
+            update_user_query = """
+                UPDATE users
+                SET models_created = $1
+                WHERE user_id = $2;
+            """
+            await DatabaseManager.execute(update_user_query, user.models_created, user.user_id)
 
 
 class PaymentRepository:

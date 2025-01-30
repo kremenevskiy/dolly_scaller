@@ -1,6 +1,5 @@
 import datetime
 
-from src.model import service as model_service
 from src.subscription_details import model as subscription_details_model
 from src.subscription_details import service as subscription_details_service
 from src.user import exception, model
@@ -63,23 +62,43 @@ async def store_user_payment(user_id: str, payment_details: dict) -> None:
     await PaymentRepository.save_payment(user_id, payment_details)
 
 
-async def update_sub_state(user: model.User, operation: model.OperationType) -> None:
-    user_sub_state = await user_repository.get_user_subcription_state(user.user_id)
+async def update_subscription_state(user_id: str, operation: model.OperationType) -> None:
+    user_subscription = await user_repository.get_active_user_subscription(user_id=user_id)
+    user = await user_repository.get_user_by_id(user_id=user_id)
 
-    if operation == OperationType.GENERATE_BY_IMAGE:
-        user_sub_state.photo_by_image_count -= 1
-        if user_sub_state.photo_by_image_count <= 0:
-            raise OperationOutOfLimit(operation)
+    if not user_subscription:
+        raise exception.NoActiveSubscription('User has no active subscription')
 
-    elif operation == OperationType.GENERATE_BY_PROMNT:
-        user_sub_state.photo_by_promnt_count -= 1
-        if user_sub_state.photo_by_promnt_count <= 0:
-            raise OperationOutOfLimit(operation)
+    if operation == model.OperationType.CREATE_MODEL:
+        user.models_created += 1
 
-    elif operation == OperationType.CREATE_MODEL:
-        count = await model_service.get_user_models_count(user.user_id)
+    elif operation == model.OperationType.GENERATE_BY_IMAGE:
+        user_subscription.photos_by_image_left -= 1
 
-        if count >= user.models_max:
-            raise OperationOutOfLimit(operation)
+    elif operation == model.OperationType.GENERATE_BY_PROMNT:
+        user_subscription.photos_by_prompt_left -= 1
 
-    await user_repository.save_user_sub_state(user_sub_state)
+    update_models = operation == model.OperationType.CREATE_MODEL
+    await user_repository.update_user_subscription(
+        user_subscription=user_subscription, user=user, update_models=update_models
+    )
+
+
+async def check_subscription_limits(user_id: str, operation: model.OperationType) -> None:
+    user_subscription = await user_repository.get_active_user_subscription(user_id=user_id)
+    user = await user_repository.get_user_by_id(user_id=user_id)
+
+    if not user_subscription:
+        raise exception.NoActiveSubscription()
+
+    if operation == model.OperationType.GENERATE_BY_IMAGE:
+        if user_subscription.photos_by_image_left <= 0:
+            raise exception.OperationOutOfLimit(operation)
+
+    elif operation == model.OperationType.GENERATE_BY_PROMNT:
+        if user_subscription.photos_by_prompt_left <= 0:
+            raise exception.OperationOutOfLimit(operation)
+
+    elif operation == model.OperationType.CREATE_MODEL:
+        if user.models_created >= user.models_max:
+            raise exception.OperationOutOfLimit(operation)
