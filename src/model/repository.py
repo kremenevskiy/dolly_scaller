@@ -1,72 +1,27 @@
-from typing import Optional
-
-from sqlalchemy import Identity, MetaData, Sequence, func, select
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-
-from src.constants import DB_NAMING_CONVENTION
-from src.model.models import Gender, Model, ModelStatus
+from src.database import DatabaseManager
+from src.model.models import Model
 
 
 class ModelRepository:
-    async def get_user_model_count(self, user_id: str) -> int:
-        session = await get_db_session()
+    @staticmethod
+    async def get_user_model_count(user_id: str) -> int:
+        query = """
+            SELECT count(*) as cnt from models where user_id = $1
+        """
 
-        val = await session.execute(
-            select(func.count(ModelDB.user_id))
-            .group_by(ModelDB.user_id)
-            .where(ModelDB.user_id == user_id)
-        )
+        row = await DatabaseManager.fetchrow(query, user_id)
 
-        count = val.scalar()
-        if count is None:
-            return 0
+        return row['cnt']
 
-        return int(count)
+    @staticmethod
+    async def create_model(model: Model):
+        query = """
+            INSERT INTO models(name, user_id, gender, link_to_adls, status, photo_info)
+            VALUES($1, $2, $3, $4, $5, $6)
+        """
 
-    async def create_model(self, model: Model):
-        session = await get_db_session()
-
-        modelDb = ModelDB(
-            name=model.name,
-            user_id=model.user_id,
-            gender=model.gender,
-            link_to_adls=model.link_to_adls,
-            status=model.status,
-        )
-
-        session.add(modelDb)
-
-        await session.commit()
-
-
-class Base(DeclarativeBase):
-    metadata = MetaData(naming_convention=DB_NAMING_CONVENTION)
-
-    pass
-
-
-class ModelDB(Base):
-    __tablename__ = "models"
-
-    id: Mapped[int] = mapped_column(
-        Identity(),
-        primary_key=True,
-    )
-    name: Mapped[str]
-    user_id: Mapped[str]
-
-    gender: Mapped[Gender]
-    link_to_adls: Mapped[Optional[str]]
-    status: Mapped[ModelStatus]
-    photo_info: Mapped[Optional[str]]
-
-    def to_model(self) -> Model:
-        return Model(
-            id=self.id,
-            name=self.name,
-            user_id=self.user_id,
-            gender=self.gender,
-            link_to_adls=self.link_to_adls,
-            status=self.status,
-            photo_info=self.photo_info,
+        await DatabaseManager.execute(
+            query,
+            model.name, model.user_id, model.gender.value,
+            model.link_to_adls, model.status.value, model.photo_info
         )

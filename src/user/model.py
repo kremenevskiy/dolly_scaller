@@ -1,8 +1,7 @@
 import datetime
 from enum import Enum
 from typing import Optional
-
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class UserType(str, Enum):
@@ -21,7 +20,6 @@ class User(BaseModel):
 
     user_type: UserType
 
-    models_created: int = 0
     models_max: int = 0
 
     date_joined: datetime.datetime | None = None
@@ -35,18 +33,25 @@ class User(BaseModel):
             user_last_name=row.get('user_last_name'),
             tg_premium=row['tg_premium'],
             user_type=UserType(row['user_type']),
-            models_created=row.get('models_created', 0),
             models_max=row.get('models_max', 0),
             date_joined=row.get('date_joined'),
         )
 
 
+class SubcriptionStatus(Enum):
+    ACTIVE = 'active'
+    PENDING = 'pending'
+    FINISHED = 'finished'
+
+
 class UserSubscription(BaseModel):
+    id: Optional[int] = None
     user_id: str
     subscription_id: int
 
     start_date: datetime.datetime
     end_date: datetime.datetime
+    status: SubcriptionStatus
 
     photos_by_prompt_left: int
     photos_by_image_left: int

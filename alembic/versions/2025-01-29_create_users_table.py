@@ -26,7 +26,6 @@ def upgrade() -> None:
             user_last_name VARCHAR(255),
             tg_premium BOOLEAN,
             user_type VARCHAR(255),
-            models_created INTEGER DEFAULT 0,
             models_max INTEGER,
             date_joined TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );

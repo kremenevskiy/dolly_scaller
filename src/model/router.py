@@ -1,30 +1,58 @@
 
+from fastapi.encoders import jsonable_encoder
+from datetime import datetime
 from fastapi import APIRouter, Header
-from pydantic import BaseModel
-from src.exceptions import PermissionDenied
+from pydantic import BaseModel, ConfigDict
+from src.exceptions import PermissionDenied, PermissionDeniedWithPendingSubscription
 from src.model import service
 from src.model.models import Model
 from src.schemas import OKResponse
 from src.user import service as user_service
-from src.user.exception import OperationOutOfLimit
-from src.user.model import OperationType, User
+from src.user.exception import OperationOutOfLimit, OperationOutOfLimitWithPending
+from src.user.model import OperationType
+from zoneinfo import ZoneInfo
 
 
 model_router = APIRouter(prefix="/model")
 
 
-class GenerateRequest(BaseModel):
-    user: User
-
-
-class GenerateModelRequest(GenerateRequest):
+class GenerateModelRequest(BaseModel):
     model: Model
 
 
+def datetime_to_gmt_str(dt: datetime) -> str:
+    if not dt.tzinfo:
+        dt = dt.replace(tzinfo=ZoneInfo('UTC'))
+
+    return dt.strftime('%Y-%m-%dT%H:%M:%S%z')
+
+
+class OperationLimitErrorWithPending(BaseModel):
+    model_config = ConfigDict(
+        json_encoders={datetime: datetime_to_gmt_str},
+        populate_by_name=True,
+    )
+
+    def serializable_dict(self, **kwargs):
+        """Return a dict which contains only serializable fields."""
+        default_dict = self.model_dump()
+
+        return jsonable_encoder(default_dict)
+
+    code: str
+    message: str
+    image_limit: int
+    promt_limit: int
+    next_sub: str 
+    operation: str
+
+
 @model_router.post("", response_model=OKResponse)
-async def generate_model(req: GenerateModelRequest, authorization: str = Header(None)):
+async def generate_model(req: GenerateModelRequest):
     try:
-        await user_service.update_sub_state(req.user, OperationType.CREATE_MODEL)
+        await user_service.check_subscription_limits(
+            req.model.user_id, OperationType.CREATE_MODEL
+        )
     except OperationOutOfLimit:
         raise PermissionDenied()
 
@@ -33,25 +61,51 @@ async def generate_model(req: GenerateModelRequest, authorization: str = Header(
     return OKResponse(status=True)
 
 
+# authorization is a user_id. Put it to the heaader "Authorization: user_id"
 @model_router.post("/{model_name}/generate/promnt")
-async def generate_image_by_promnt(model_name: str, user: User, authorization: str = Header(None)):
+async def generate_image_by_promnt(model_name: str, authorization: str = Header(None)):
     try:
-        await user_service.update_sub_state(user, OperationType.GENERATE_BY_PROMNT)
+        await user_service.update_subscription_state(
+            authorization, OperationType.GENERATE_BY_PROMNT,
+        )
     except OperationOutOfLimit:
         raise PermissionDenied()
+    except OperationOutOfLimitWithPending as e:
+        err = OperationLimitErrorWithPending(
+            operation=e.operation.value,
+            message=e.detail,
+            image_limit=e.current_limit_image,
+            promt_limit=e.current_limit_promt,
+            next_sub=datetime_to_gmt_str(e.next_sub),
+            code="operation_out_limit_with_pending",
+        )
+        raise PermissionDeniedWithPendingSubscription(err.model_dump())
 
     return OKResponse(
-            status=True
-            )
+        status=True
+    )
 
 
+# authorization is a user_id. Put it to the heaader "Authorization: user_id"
 @model_router.post("/{model_name}/generate/image")
-async def generate_image_by_image(model_name: str, user: User, authorization: str = Header(None)):
+async def generate_image_by_image(model_name: str, authorization: str = Header(None)):
     try:
-        await user_service.update_sub_state(user, OperationType.GENERATE_BY_IMAGE)
+        await user_service.update_subscription_state(
+            authorization, OperationType.GENERATE_BY_IMAGE,
+        )
     except OperationOutOfLimit:
         raise PermissionDenied()
+    except OperationOutOfLimitWithPending as e:
+        err = OperationLimitErrorWithPending(
+            operation=e.operation.value,
+            message=e.detail,
+            image_limit=e.current_limit_image,
+            promt_limit=e.current_limit_promt,
+            next_sub=datetime_to_gmt_str(e.next_sub),
+            code="operation_out_limit_with_pending",
+        )
+        raise PermissionDeniedWithPendingSubscription(err.model_dump())
 
     return OKResponse(
-            status=True
-            )
+        status=True
+    )

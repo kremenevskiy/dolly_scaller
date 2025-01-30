@@ -1,6 +1,7 @@
 from fastapi import APIRouter
+from pydantic import BaseModel
 
-from src.model import service as model_service
+from src.exceptions import NotFound
 from src.schemas import OKResponse
 from src.user import model, service
 
@@ -19,12 +20,17 @@ async def add_user_to_whitelist(username: str) -> OKResponse:
     return OKResponse(status=True)
 
 
-@user_router.post('/{user_id}/buy-subscription/{subscription_id}')
-async def user_buy_subscription(user_id: str, subscription_id: int) -> OKResponse:
+class SubcribeRequest(BaseModel):
+    subcription_id: int
+
+
+@user_router.post('/{user_id}/subcribe')
+async def user_buy_subscription(user_id: str, req: SubcribeRequest) -> OKResponse:
     await service.subscribe_user(
         user_id=user_id,
-        subscription_id=subscription_id,
+        subscription_id=req.subcription_id,
     )
+
     return OKResponse(status=True)
 
 
@@ -40,15 +46,19 @@ async def user_add_payment_info(
     return OKResponse(status=True)
 
 
-# class UserCountResponse(OKResponse):
-#     models_count: int
+@user_router.get('/{user_id}/subcription')
+async def active_subscription(user_id: str) -> OKResponse:
+    sub = await service.get_active_subcribe(user_id)
+    if sub is None:
+        raise NotFound()
+
+    return OKResponse(
+        status=True
+    )
 
 
-# @user_router.get("/{user_id}/models/count", response_model=UserCountResponse)
-# async def get_user_model_count(user_id: str):
-#     count = await model_service.get_user_models_count(user_id)
+@user_router.get('/{user_id}/limit/model')
+async def check_user_model_limit(user_id: str) -> OKResponse:
+    await service.check_subscription_limits(user_id, model.OperationType.CREATE_MODEL)
 
-#     return UserCountResponse(
-#         status=True,
-#         models_count=count,
-#     )
+    return OKResponse(status=True)

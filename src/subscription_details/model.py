@@ -23,6 +23,9 @@ class Subscription(BaseModel):
     photos_by_prompt_count: int
     photos_by_image_count: int
 
+    def is_monthly_sub(self) -> bool:
+        return self.subscription_type == SubscriptionType.MONTHLY.value
+
     @classmethod
     def from_row(cls, row):
         return cls(

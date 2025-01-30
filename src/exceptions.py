@@ -16,8 +16,16 @@ class PermissionDenied(DetailedHTTPException):
     DETAIL = 'Permission denied'
 
 
+class PermissionDeniedWithPendingSubscription(HTTPException):
+    STATUS_CODE = status.HTTP_403_FORBIDDEN
+
+    def __init__(self, detail: dict[str, Any], **kwargs: dict[str, Any]) -> None:
+        super().__init__(status_code=self.STATUS_CODE, detail=detail, **kwargs)
+
+
 class NotFound(DetailedHTTPException):
     STATUS_CODE = status.HTTP_404_NOT_FOUND
+    DETAIL = 'Not Found'
 
 
 class BadRequest(DetailedHTTPException):

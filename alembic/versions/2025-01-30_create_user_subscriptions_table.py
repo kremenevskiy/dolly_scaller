@@ -27,10 +27,22 @@ def upgrade() -> None:
             end_date TIMESTAMP WITH TIME ZONE,
             photos_by_prompt_left INT NOT NULL DEFAULT 0,
             photos_by_image_left INT NOT NULL DEFAULT 0,
-            is_active BOOLEAN NOT NULL DEFAULT FALSE
+            status VARCHAR(100) NOT NULL
+        );
+    """)
+    op.execute("""
+        CREATE TABLE models (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            user_id VARCHAR(255) NOT NULL,
+            gender VARCHAR(100) NOT NULL,
+            link_to_adls VARCHAR(255),
+            status VARCHAR(100) NOT NULL,
+            photo_info VARCHAR(255)
         );
     """)
 
 
 def downgrade() -> None:
     op.execute('DROP TABLE user_subscriptions;')
+    op.execute('DROP TABLE models')
