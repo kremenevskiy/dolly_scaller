@@ -16,10 +16,3 @@ INSERT INTO subscriptions_details (
     ('generations_large_pack',  'generations',  5500,  4800,  NULL,   TRUE, 0, 1000, 1000);
 
 
-
-
-
-1 star - 0.013$ -> 1.13 rub
-                    100
-
-
