@@ -3,7 +3,11 @@ from pydantic import BaseModel
 
 from src.exceptions import NotFound
 from src.schemas import OKResponse
-from src.user import model, service
+from src.user import (
+    model,
+    service,
+)
+
 
 user_router = APIRouter(prefix='/user')
 
