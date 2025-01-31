@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from src.exceptions import NotFound
 from src.schemas import OKResponse
 from src.user import model, service
+from src.user.exception import NoActiveSubscription
 
 user_router = APIRouter(prefix='/user')
 
@@ -11,7 +12,31 @@ user_router = APIRouter(prefix='/user')
 @user_router.post('/create-new-user')
 async def create_new_user(user_request: model.User) -> OKResponse:
     await service.create_new_user(user_request)
+
     return OKResponse(status=True)
+
+
+class UserProfile(BaseModel):
+    user: model.User
+    user_subscription: model.UserSubscription
+    model_count: int
+
+
+@user_router.get('/{user_id}')
+async def user_profile(user_id: str) -> UserProfile:
+    user = await service.get_user(user_id)
+
+    sub = await service.get_active_subcribe(user_id)
+    if sub is None:
+        raise NoActiveSubscription()
+
+    count = await service.get_user_models_count(user_id)
+
+    return UserProfile(
+        user=user,
+        user_subscription=sub,
+        model_count=count
+    )
 
 
 @user_router.get('/add-to-whitelist')
