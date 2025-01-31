@@ -13,6 +13,14 @@ async def create_new_user(user: model.User) -> None:
     await user_repository.create_new_user(user)
 
 
+async def get_user(user_id: str) -> model.User:
+    user = await user_repository.get_user_by_id(user_id)
+    if user is None:
+        raise exception.UserNotFound()
+
+    return user
+
+
 async def get_user_id_from_username(username: str) -> str:
     user_id = await user_repository.get_user_id_from_user_username(username)
     if user_id is None:
@@ -129,8 +137,7 @@ async def is_raise_limits(user: model.User, user_subscription: model.UserSubscri
             return True
 
     elif operation == model.OperationType.CREATE_MODEL:
-        model_count = await model_service.get_user_models_count(user.user_id)
-        print(user.models_max)
+        model_count = await get_user_models_count(user.user_id)
         if model_count >= user.models_max:
             return True
 
@@ -154,3 +161,7 @@ async def handle_raised_limits(user: model.User, user_subcription: model.UserSub
 
     elif operation == model.OperationType.CREATE_MODEL:
         raise exception.OperationOutOfLimit(operation)
+
+
+async def get_user_models_count(user_id: str) -> int:
+    return await model_service.get_user_models_count(user_id)
