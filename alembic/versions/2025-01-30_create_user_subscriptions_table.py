@@ -45,5 +45,5 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.execute('DROP TABLE user_subscriptions;')
-    op.execute('DROP TABLE models')
+    op.execute('DROP TABLE IF EXISTS user_subscriptions;')
+    op.execute('DROP TABLE IF EXISTS models')

@@ -1,5 +1,6 @@
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
@@ -7,23 +8,41 @@ from pydantic import PostgresDsn, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.constants import Environment
+from src.logger import logger
 
-load_dotenv(".env", override=True)
+
+def load_env_file(fp: str) -> None:
+    if not Path(fp).exists():
+        raise FileNotFoundError(f"Environment file '{fp}' not found!")
+    load_dotenv(fp, override=True)
+
+
+load_env_file('.env')
+
+env = os.getenv('ENV', 'test').lower()
+
+if env == 'test':
+    logger.info('Loaded test env')
+    load_env_file('.env.test')
+
+elif env == 'prod':
+    logger.info('Loaded production env')
+    load_env_file('.env.prod')
+else:
+    raise ValueError(f'Unknown environment: {env}')
 
 
 @dataclass(frozen=True)
 class DatabaseConf:
-    host: str = os.environ["DB_HOST"]
-    db_name: str = os.environ["DB_NAME"]
-    db_user: str = os.environ["DB_USER"]
-    db_password: str = os.environ["DB_PASSWORD"]
-    db_port: int = int(os.environ["DB_PORT"])
+    host: str = os.environ['DB_HOST']
+    db_name: str = os.environ['DB_NAME']
+    db_user: str = os.environ['DB_USER']
+    db_password: str = os.environ['DB_PASSWORD']
+    db_port: int = int(os.environ['DB_PORT'])
 
 
 class CustomBaseSettings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", extra="ignore"
-    )
+    model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8', extra='ignore')
 
 
 class Config(CustomBaseSettings):
@@ -37,25 +56,25 @@ class Config(CustomBaseSettings):
 
     SENTRY_DSN: str | None = None
 
-    CORS_ORIGINS: list[str] = ["*"]
+    CORS_ORIGINS: list[str] = ['*']
     CORS_ORIGINS_REGEX: str | None = None
-    CORS_HEADERS: list[str] = ["*"]
+    CORS_HEADERS: list[str] = ['*']
 
-    APP_VERSION: str = "0.1"
+    APP_VERSION: str = '0.1'
 
-    @model_validator(mode="after")
-    def validate_sentry_non_local(self) -> "Config":
+    @model_validator(mode='after')
+    def validate_sentry_non_local(self) -> 'Config':
         if self.ENVIRONMENT.is_deployed and not self.SENTRY_DSN:
-            raise ValueError("Sentry is not set")
+            raise ValueError('Sentry is not set')
 
         return self
 
 
 settings = Config()
 
-app_configs: dict[str, Any] = {"title": "App API"}
+app_configs: dict[str, Any] = {'title': 'App API'}
 if settings.ENVIRONMENT.is_deployed:
-    app_configs["root_path"] = f"/v{settings.APP_VERSION}"
+    app_configs['root_path'] = f'/v{settings.APP_VERSION}'
 
 if not settings.ENVIRONMENT.is_debug:
-    app_configs["openapi_url"] = None  # hide docs
+    app_configs['openapi_url'] = None  # hide docs
