@@ -1,3 +1,5 @@
+import json
+
 from src.database import DatabaseManager
 from src.model.models import Model
 
@@ -19,9 +21,13 @@ class ModelRepository:
             INSERT INTO models(name, user_id, gender, link_to_adls, status, photo_info)
             VALUES($1, $2, $3, $4, $5, $6)
         """
-
+        photo_info = json.dumps(model.photo_info)
         await DatabaseManager.execute(
             query,
-            model.name, model.user_id, model.gender.value,
-            model.link_to_adls, model.status.value, model.photo_info
+            model.name,
+            model.user_id,
+            model.gender.value,
+            model.link_to_adls,
+            model.status.value,
+            photo_info,
         )

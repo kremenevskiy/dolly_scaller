@@ -1,7 +1,11 @@
 import datetime
 from enum import Enum
 from typing import Optional
-from pydantic import BaseModel
+
+from pydantic import (
+    BaseModel,
+    Field,
+)
 
 
 class UserType(str, Enum):
@@ -18,7 +22,7 @@ class User(BaseModel):
     user_last_name: str | None
     tg_premium: bool
 
-    user_type: UserType
+    user_type: UserType = UserType.CUSTOMER
 
     models_max: int = 0
 

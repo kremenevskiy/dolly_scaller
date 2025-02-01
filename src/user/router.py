@@ -3,8 +3,12 @@ from pydantic import BaseModel
 
 from src.exceptions import NotFound
 from src.schemas import OKResponse
-from src.user import model, service
+from src.user import (
+    model,
+    service,
+)
 from src.user.exception import NoActiveSubscription
+
 
 user_router = APIRouter(prefix='/user')
 
@@ -32,11 +36,7 @@ async def user_profile(user_id: str) -> UserProfile:
 
     count = await service.get_user_models_count(user_id)
 
-    return UserProfile(
-        user=user,
-        user_subscription=sub,
-        model_count=count
-    )
+    return UserProfile(user=user, user_subscription=sub, model_count=count)
 
 
 @user_router.get('/add-to-whitelist')
@@ -77,9 +77,7 @@ async def active_subscription(user_id: str) -> OKResponse:
     if sub is None:
         raise NotFound()
 
-    return OKResponse(
-        status=True
-    )
+    return OKResponse(status=True)
 
 
 @user_router.get('/{user_id}/limit/model')

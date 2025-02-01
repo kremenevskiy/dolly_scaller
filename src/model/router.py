@@ -1,19 +1,32 @@
-
-from fastapi.encoders import jsonable_encoder
 from datetime import datetime
-from fastapi import APIRouter, Header
-from pydantic import BaseModel, ConfigDict
-from src.exceptions import PermissionDenied, PermissionDeniedWithPendingSubscription
+from zoneinfo import ZoneInfo
+
+from fastapi import (
+    APIRouter,
+    Header,
+)
+from fastapi.encoders import jsonable_encoder
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+)
+
+from src.exceptions import (
+    PermissionDenied,
+    PermissionDeniedWithPendingSubscription,
+)
 from src.model import service
 from src.model.models import Model
 from src.schemas import OKResponse
 from src.user import service as user_service
-from src.user.exception import OperationOutOfLimit, OperationOutOfLimitWithPending
+from src.user.exception import (
+    OperationOutOfLimit,
+    OperationOutOfLimitWithPending,
+)
 from src.user.model import OperationType
-from zoneinfo import ZoneInfo
 
 
-model_router = APIRouter(prefix="/model")
+model_router = APIRouter(prefix='/model')
 
 
 class GenerateModelRequest(BaseModel):
@@ -43,16 +56,14 @@ class OperationLimitErrorWithPending(BaseModel):
     message: str
     image_limit: int
     promt_limit: int
-    next_sub: str 
+    next_sub: str
     operation: str
 
 
-@model_router.post("", response_model=OKResponse)
+@model_router.post('', response_model=OKResponse)
 async def generate_model(req: GenerateModelRequest):
     try:
-        await user_service.check_subscription_limits(
-            req.model.user_id, OperationType.CREATE_MODEL
-        )
+        await user_service.check_subscription_limits(req.model.user_id, OperationType.CREATE_MODEL)
     except OperationOutOfLimit:
         raise PermissionDenied()
 
@@ -62,11 +73,12 @@ async def generate_model(req: GenerateModelRequest):
 
 
 # authorization is a user_id. Put it to the heaader "Authorization: user_id"
-@model_router.post("/{model_name}/generate/promnt")
+@model_router.post('/{model_name}/generate/prompt')
 async def generate_image_by_promnt(model_name: str, authorization: str = Header(None)):
     try:
         await user_service.update_subscription_state(
-            authorization, OperationType.GENERATE_BY_PROMNT,
+            authorization,
+            OperationType.GENERATE_BY_PROMNT,
         )
     except OperationOutOfLimit:
         raise PermissionDenied()
@@ -77,21 +89,20 @@ async def generate_image_by_promnt(model_name: str, authorization: str = Header(
             image_limit=e.current_limit_image,
             promt_limit=e.current_limit_promt,
             next_sub=datetime_to_gmt_str(e.next_sub),
-            code="operation_out_limit_with_pending",
+            code='operation_out_limit_with_pending',
         )
         raise PermissionDeniedWithPendingSubscription(err.model_dump())
 
-    return OKResponse(
-        status=True
-    )
+    return OKResponse(status=True)
 
 
 # authorization is a user_id. Put it to the heaader "Authorization: user_id"
-@model_router.post("/{model_name}/generate/image")
+@model_router.post('/{model_name}/generate/image')
 async def generate_image_by_image(model_name: str, authorization: str = Header(None)):
     try:
         await user_service.update_subscription_state(
-            authorization, OperationType.GENERATE_BY_IMAGE,
+            authorization,
+            OperationType.GENERATE_BY_IMAGE,
         )
     except OperationOutOfLimit:
         raise PermissionDenied()
@@ -102,10 +113,8 @@ async def generate_image_by_image(model_name: str, authorization: str = Header(N
             image_limit=e.current_limit_image,
             promt_limit=e.current_limit_promt,
             next_sub=datetime_to_gmt_str(e.next_sub),
-            code="operation_out_limit_with_pending",
+            code='operation_out_limit_with_pending',
         )
         raise PermissionDeniedWithPendingSubscription(err.model_dump())
 
-    return OKResponse(
-        status=True
-    )
+    return OKResponse(status=True)

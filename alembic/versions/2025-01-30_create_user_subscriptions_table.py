@@ -10,6 +10,7 @@ from typing import Sequence
 
 from alembic import op
 
+
 # revision identifiers, used by Alembic.
 revision: str = '4bf5f870ba86'
 down_revision: str | None = 'af5f0eccc5a0'
