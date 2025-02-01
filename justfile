@@ -1,4 +1,3 @@
-set shell := ["pwsh", "-c"]
 default:
   just --list
 

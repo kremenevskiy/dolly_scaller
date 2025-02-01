@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -16,11 +15,11 @@ class ModelStatus(Enum):
 
 
 class Model(BaseModel):
-    id: Optional[int] = None
+    id: int | None = None
     name: str
     user_id: str
 
     gender: Gender
-    link_to_adls: Optional[str] = None
+    link_to_adls: str | None = None
     status: ModelStatus
-    photo_info: Optional[dict] = None
+    photo_info: dict | None = None

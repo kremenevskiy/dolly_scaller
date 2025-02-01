@@ -16,12 +16,11 @@ class ModelRepository:
         return row['cnt']
 
     @staticmethod
-    async def create_model(model: Model):
+    async def create_model(model: Model) -> None:
         query = """
             INSERT INTO models(name, user_id, gender, link_to_adls, status, photo_info)
             VALUES($1, $2, $3, $4, $5, $6)
         """
-        photo_info = json.dumps(model.photo_info)
         await DatabaseManager.execute(
             query,
             model.name,
@@ -29,5 +28,5 @@ class ModelRepository:
             model.gender.value,
             model.link_to_adls,
             model.status.value,
-            photo_info,
+            json.dumps(model.photo_info),
         )
