@@ -4,7 +4,7 @@ INSERT INTO subscriptions_details (
 ) VALUES
     ('monthly_small',            'monthly',       900,   800,   30,     TRUE, 1, 50,  50),
     ('monthly_middle',           'monthly',       1200,  1050,  30,     TRUE, 1, 150, 150),
-    ('monthly_large',            'monthly',       5500,  4900,  30,     TRUE, 2, 500, 500),
+    ('monthly_large',            'monthly',       5300,  4700,  30,     TRUE, 2, 500, 500),
 
     ('models_small_pack',        'models',        900,   800,   NULL,   TRUE, 1, 0, 0),
     ('models_midlle_pack',       'models',        600,   1400,  NULL,   TRUE, 2, 0, 0),

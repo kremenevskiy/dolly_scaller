@@ -38,11 +38,11 @@ def upgrade() -> None:
             gender VARCHAR(100) NOT NULL,
             link_to_adls VARCHAR(255),
             status VARCHAR(100) NOT NULL,
-            photo_info VARCHAR(255)
+            photo_info JSONB
         );
     """)
 
 
 def downgrade() -> None:
-    op.execute('DROP TABLE user_subscriptions;')
-    op.execute('DROP TABLE models')
+    op.execute('DROP TABLE IF EXISTS user_subscriptions;')
+    op.execute('DROP TABLE IF EXISTS models')
