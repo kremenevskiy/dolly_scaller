@@ -98,7 +98,7 @@ class UserRepository:
         query = """
             UPDATE users
             SET models_max = COALESCE(models_max, 0) + $1
-            WHERE user_id = $2 AND status = 'active';
+            WHERE user_id = $2;
         """
         await DatabaseManager.execute(query, models_count, user_id)
 
