@@ -140,3 +140,5 @@ backup.dump.gz
 
 
 alembic.ini
+.env.test
+.env.prod
