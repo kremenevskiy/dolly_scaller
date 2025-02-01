@@ -11,8 +11,8 @@ from typing import Sequence, Union
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "d5484eec54a6"
-down_revision: Union[str, None] = "56944a7590ee"
+revision: str = 'd5484eec54a6'
+down_revision: Union[str, None] = '56944a7590ee'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -37,4 +37,4 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.execute("DROP TABLE subscriptions_details;")
+    op.execute('DROP TABLE IF EXISTS subscriptions_details;')
