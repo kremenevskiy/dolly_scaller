@@ -150,7 +150,7 @@ class UserRepository:
             UPDATE user_subscriptions
             SET photos_by_prompt_left = $1,
                 photos_by_image_left = $2
-            WHERE user_id = $3 AND is_active = TRUE;
+            WHERE user_id = $3 AND status = 'active';
         """
         await DatabaseManager.execute(
             update_subscription_query,
