@@ -103,9 +103,10 @@ class UserRepository:
         await DatabaseManager.execute(query, models_count, user_id)
 
     @staticmethod
-
     @staticmethod
-    async def get_user_subscription(user_id: str, status: model.SubcriptionStatus) -> model.UserSubscription | None:
+    async def get_user_subscription(
+        user_id: str, status: model.SubcriptionStatus
+    ) -> model.UserSubscription | None:
         query = """
             SELECT id, subscription_id, user_id, start_date, end_date,
                    photos_by_prompt_left, photos_by_image_left, status

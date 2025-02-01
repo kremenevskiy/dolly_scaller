@@ -1,10 +1,19 @@
 import datetime
 
-from src.subscription_details import model as subscription_details_model
-from src.subscription_details import service as subscription_details_service
-from src.user import exception, model
-from src.user.repository import PaymentRepository, UserRepository
 from src.model import service as model_service
+from src.subscription_details import (
+    model as subscription_details_model,
+    service as subscription_details_service,
+)
+from src.user import (
+    exception,
+    model,
+)
+from src.user.repository import (
+    PaymentRepository,
+    UserRepository,
+)
+
 
 user_repository = UserRepository()
 
@@ -62,6 +71,7 @@ async def subscribe_user(user_id: str, subscription_id: int) -> None:
         )
 
         await user_repository.save_user_subscription(new_user_subscription)
+        await user_repository.increase_user_models_limit(user_id, subscription.models_count)
 
     elif (
         subscription.subscription_type
@@ -127,7 +137,9 @@ async def check_subscription_limits(user_id: str, operation: model.OperationType
         await handle_raised_limits(user, user_subscription, operation)
 
 
-async def is_raise_limits(user: model.User, user_subscription: model.UserSubscription, operation: model.OperationType) -> bool:
+async def is_raise_limits(
+    user: model.User, user_subscription: model.UserSubscription, operation: model.OperationType
+) -> bool:
     if operation == model.OperationType.GENERATE_BY_IMAGE:
         if user_subscription.photos_by_image_left <= 0:
             return True
@@ -144,19 +156,23 @@ async def is_raise_limits(user: model.User, user_subscription: model.UserSubscri
     return False
 
 
-async def handle_raised_limits(user: model.User, user_subcription: model.UserSubscription, operation: model.OperationType):
-    if operation == model.OperationType.GENERATE_BY_IMAGE or operation == model.OperationType.GENERATE_BY_PROMNT:
-        pending_sub = await UserRepository.get_pending_user_subscription(
-            user.user_id
-        )
+async def handle_raised_limits(
+    user: model.User, user_subcription: model.UserSubscription, operation: model.OperationType
+):
+    if (
+        operation == model.OperationType.GENERATE_BY_IMAGE
+        or operation == model.OperationType.GENERATE_BY_PROMNT
+    ):
+        pending_sub = await UserRepository.get_pending_user_subscription(user.user_id)
 
         if pending_sub is None:
             raise exception.OperationOutOfLimit(operation)
 
         raise exception.OperationOutOfLimitWithPending(
-            operation, user_subcription.photos_by_image_left,
+            operation,
+            user_subcription.photos_by_image_left,
             user_subcription.photos_by_prompt_left,
-            pending_sub.start_date
+            pending_sub.start_date,
         )
 
     elif operation == model.OperationType.CREATE_MODEL:
