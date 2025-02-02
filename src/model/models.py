@@ -11,6 +11,7 @@ class Gender(Enum):
 class ModelStatus(Enum):
     WAITING_FOR_TRAINING = 'waiting_for_training'
     TRAIN_STARTED = 'train_started'
+    TRAIN_FAILED = 'failed'
     READY = 'ready'
 
 
