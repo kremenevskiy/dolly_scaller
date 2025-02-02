@@ -2,13 +2,13 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from src.exceptions import NotFound
+from src.logger import logger
 from src.schemas import OKResponse
 from src.user import (
     model,
     service,
 )
 from src.user.exception import NoActiveSubscription
-
 
 user_router = APIRouter(prefix='/user')
 
@@ -26,7 +26,7 @@ class UserProfile(BaseModel):
     model_count: int
 
 
-@user_router.get('/{user_id}')
+@user_router.get('/profile/{user_id}')
 async def user_profile(user_id: str) -> UserProfile:
     user = await service.get_user(user_id)
 
@@ -39,9 +39,15 @@ async def user_profile(user_id: str) -> UserProfile:
     return UserProfile(user=user, user_subscription=sub, model_count=count)
 
 
-@user_router.get('/add-to-whitelist')
+@user_router.get('/add-whitelist')
 async def add_user_to_whitelist(username: str) -> OKResponse:
     await service.add_user_to_whitelist(username=username)
+    return OKResponse(status=True)
+
+
+@user_router.get('/delete-whitelist')
+async def delete_user_from_whitelist(username: str) -> OKResponse:
+    await service.delete_user_from_whitelist(username=username)
     return OKResponse(status=True)
 
 

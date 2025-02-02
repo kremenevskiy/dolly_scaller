@@ -62,6 +62,24 @@ class UserRepository:
         await DatabaseManager.execute(query, model.UserType.WHITELISTED.value, user_id)
 
     @staticmethod
+    async def delete_user_from_whitelist(user_id: str) -> bool:
+        query_check = """
+            SELECT user_type FROM users WHERE user_id = $1
+        """
+        result = await DatabaseManager.fetchrow(query_check, user_id)
+
+        if not result or result['user_type'] == model.UserType.CUSTOMER.value:
+            return False
+
+        query_update = """
+            UPDATE users
+            SET user_type = $1
+            WHERE user_id = $2
+        """
+        await DatabaseManager.execute(query_update, model.UserType.CUSTOMER.value, user_id)
+        return True
+
+    @staticmethod
     async def save_user_subscription(user_subscription: model.UserSubscription) -> None:
         # Step 2: Insert the new subscription as active
         insert_query = """

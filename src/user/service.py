@@ -3,6 +3,8 @@ import datetime
 from src.model import service as model_service
 from src.subscription_details import (
     model as subscription_details_model,
+)
+from src.subscription_details import (
     service as subscription_details_service,
 )
 from src.user import (
@@ -14,7 +16,6 @@ from src.user.repository import (
     UserRepository,
 )
 
-
 user_repository = UserRepository()
 
 
@@ -25,7 +26,7 @@ async def create_new_user(user: model.User) -> None:
 async def get_user(user_id: str) -> model.User:
     user = await user_repository.get_user_by_id(user_id)
     if user is None:
-        raise exception.UserNotFound()
+        raise exception.UserNotFound
 
     return user
 
@@ -33,13 +34,20 @@ async def get_user(user_id: str) -> model.User:
 async def get_user_id_from_username(username: str) -> str:
     user_id = await user_repository.get_user_id_from_user_username(username)
     if user_id is None:
-        raise exception.UserNotFound()
+        raise exception.UserNotFound
     return user_id
 
 
 async def add_user_to_whitelist(username: str) -> None:
     user_id = await get_user_id_from_username(username=username)
     await user_repository.add_user_to_whitelist(user_id)
+
+
+async def delete_user_from_whitelist(username: str) -> None:
+    user_id = await get_user_id_from_username(username=username)
+    is_success = await user_repository.delete_user_from_whitelist(user_id)
+    if not is_success:
+        raise exception.UserNotWhitelisted
 
 
 async def get_active_subcribe(user_id: str) -> model.UserSubscription | None:
@@ -78,7 +86,7 @@ async def subscribe_user(user_id: str, subscription_id: int) -> None:
         == subscription_details_model.SubscriptionType.GENERATIONS.value
     ):
         if active_sub is None:
-            raise exception.NoActiveSubscription()
+            raise exception.NoActiveSubscription
 
         # Add generations to active subscription
         await user_repository.add_generations_to_active_subscription(
@@ -89,7 +97,7 @@ async def subscribe_user(user_id: str, subscription_id: int) -> None:
 
     elif subscription.subscription_type == subscription_details_model.SubscriptionType.MODELS.value:
         if active_sub is None:
-            raise exception.NoActiveSubscription()
+            raise exception.NoActiveSubscription
         # Increase max models count for user
         await user_repository.increase_user_models_limit(user_id, subscription.models_count)
 
@@ -101,11 +109,11 @@ async def store_user_payment(user_id: str, payment_details: dict) -> None:
 async def update_subscription_state(user_id: str, operation: model.OperationType) -> None:
     user_subscription = await user_repository.get_active_user_subscription(user_id=user_id)
     if user_subscription is None:
-        raise exception.NoActiveSubscription()
+        raise exception.NoActiveSubscription
 
     user = await user_repository.get_user_by_id(user_id=user_id)
     if user is None:
-        raise exception.UserNotFound()
+        raise exception.UserNotFound
 
     if await is_raise_limits(user, user_subscription, operation):
         await handle_raised_limits(user, user_subscription, operation)
@@ -124,14 +132,14 @@ async def update_subscription_state(user_id: str, operation: model.OperationType
 async def check_subscription_limits(user_id: str, operation: model.OperationType) -> None:
     user_subscription = await user_repository.get_active_user_subscription(user_id=user_id)
     if user_subscription is None:
-        raise exception.NoActiveSubscription()
+        raise exception.NoActiveSubscription
 
     user = await user_repository.get_user_by_id(user_id=user_id)
     if user is None:
-        raise exception.UserNotFound()
+        raise exception.UserNotFound
 
     if not user_subscription:
-        raise exception.NoActiveSubscription()
+        raise exception.NoActiveSubscription
 
     if await is_raise_limits(user, user_subscription, operation):
         await handle_raised_limits(user, user_subscription, operation)
