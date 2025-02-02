@@ -33,6 +33,10 @@ class OKResponse(Response):
     status: bool
 
 
+class OKResponseWithUserID(OKResponse):
+    user_id: str
+
+
 class ErrorResponse(Response):
     error: str
     code: str

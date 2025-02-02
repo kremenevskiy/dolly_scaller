@@ -2,8 +2,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from src.exceptions import NotFound
-from src.logger import logger
-from src.schemas import OKResponse
+from src.schemas import OKResponse, OKResponseWithUserID
 from src.user import (
     model,
     service,
@@ -40,9 +39,9 @@ async def user_profile(user_id: str) -> UserProfile:
 
 
 @user_router.get('/add-whitelist')
-async def add_user_to_whitelist(username: str) -> OKResponse:
-    await service.add_user_to_whitelist(username=username)
-    return OKResponse(status=True)
+async def add_user_to_whitelist(username: str) -> OKResponseWithUserID:
+    user_id = await service.add_user_to_whitelist(username=username)
+    return OKResponseWithUserID(status=True, user_id=user_id)
 
 
 @user_router.get('/delete-whitelist')

@@ -38,9 +38,10 @@ async def get_user_id_from_username(username: str) -> str:
     return user_id
 
 
-async def add_user_to_whitelist(username: str) -> None:
+async def add_user_to_whitelist(username: str) -> str:
     user_id = await get_user_id_from_username(username=username)
     await user_repository.add_user_to_whitelist(user_id)
+    return user_id
 
 
 async def delete_user_from_whitelist(username: str) -> None:
