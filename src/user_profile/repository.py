@@ -13,23 +13,26 @@ class UserProfileRepository:
         return [model.PhotoFormat.from_row(row) for row in rows]
 
     @staticmethod
-    async def get_user_photo_format(user_id: str) -> list[model.PhotoFormat]:
+    async def get_user_photo_format(user_id: str) -> model.PhotoFormat | None:
         query = """
             SELECT f.id, f.format, f.height, f.width
             FROM user_profiles up
             JOIN formats f ON up.format_id = f.id
-            WHERE up.user_id = $1';
+            WHERE up.user_id = $1
         """
         row = await DatabaseManager.fetchrow(query, user_id)
 
-        return model.PhotoFormat.from_row(row)
+        if row:
+            return model.PhotoFormat.from_row(row)
+        else:
+            return None
 
     @staticmethod
     async def check_user_format_exists(user_id: str) -> list[model.PhotoFormat]:
         query = """
             SELECT EXISTS (
                 SELECT 1 FROM user_profiles WHERE user_id = $1
-            );
+            )
         """
         return await DatabaseManager.fetchval(query, user_id)
 
