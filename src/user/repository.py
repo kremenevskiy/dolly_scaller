@@ -84,8 +84,8 @@ class UserRepository:
         # Step 2: Insert the new subscription as active
         insert_query = """
             INSERT INTO user_subscriptions (user_id, subscription_id, start_date, end_date, status,
-                                            photos_by_prompt_left, photos_by_image_left)
-            VALUES ($1, $2, $3, $4, $5, $6, $7);
+                                            generation_photos_left)
+            VALUES ($1, $2, $3, $4, $5, $6);
         """
 
         await DatabaseManager.execute(
@@ -95,21 +95,19 @@ class UserRepository:
             user_subscription.start_date,
             user_subscription.end_date,
             user_subscription.status.value,
-            user_subscription.photos_by_prompt_left,
-            user_subscription.photos_by_image_left,
+            user_subscription.generation_photos_left,
         )
 
     @staticmethod
     async def add_generations_to_active_subscription(
-        user_id: str, photos_by_prompt: int, photos_by_image: int
+        user_id: str, photos: int
     ) -> None:
         query = """
             UPDATE user_subscriptions
-            SET photos_by_prompt_left = photos_by_prompt_left + $1,
-                photos_by_image_left = photos_by_image_left + $2
-            WHERE user_id = $3 AND status = 'active';
+            SET generation_photos_left = generation_photos_left + $1,
+            WHERE user_id = $2 AND status = 'active';
         """
-        await DatabaseManager.execute(query, photos_by_prompt, photos_by_image, user_id)
+        await DatabaseManager.execute(query, photos, user_id)
 
     @staticmethod
     async def increase_user_models_limit(user_id: str, models_count: int) -> None:
@@ -127,7 +125,7 @@ class UserRepository:
     ) -> model.UserSubscription | None:
         query = """
             SELECT id, subscription_id, user_id, start_date, end_date,
-                   photos_by_prompt_left, photos_by_image_left, status
+                   generation_photos_left, status
             FROM user_subscriptions
             WHERE user_id = $1 AND status = $2
             LIMIT 1;
@@ -145,8 +143,7 @@ class UserRepository:
                 start_date=row['start_date'],
                 end_date=row['end_date'],
                 status=row['status'],
-                photos_by_prompt_left=row['photos_by_prompt_left'],
-                photos_by_image_left=row['photos_by_image_left'],
+                generation_photos_left=row['generation_photos_left'],
             )
             if row
             else None
@@ -167,14 +164,12 @@ class UserRepository:
         # Update subscription details
         update_subscription_query = """
             UPDATE user_subscriptions
-            SET photos_by_prompt_left = $1,
-                photos_by_image_left = $2
-            WHERE user_id = $3 AND status = 'active';
+            SET generation_photos_left = $1
+            WHERE user_id = $2 AND status = 'active';
         """
         await DatabaseManager.execute(
             update_subscription_query,
-            user_subscription.photos_by_prompt_left,
-            user_subscription.photos_by_image_left,
+            user_subscription.generation_photos_left,
             user_subscription.user_id,
         )
 

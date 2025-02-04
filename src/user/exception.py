@@ -30,13 +30,11 @@ class OperationOutOfLimitWithPending(HTTPException):
     def __init__(
         self,
         operation: OperationType,
-        current_limit_image: int,
-        current_limit_promt: int,
+        current_limit: int,
         next_sub: datetime,
     ):
         self.operation = operation
-        self.current_limit_image = current_limit_image
-        self.current_limit_promt = current_limit_promt
+        self.current_limit = current_limit
         self.next_sub = next_sub
 
         detail = f"Operation '{operation.value}' is out of limit."

@@ -51,14 +51,14 @@ async def delete_user_from_whitelist(username: str) -> OKResponse:
 
 
 class SubcribeRequest(BaseModel):
-    subcription_id: int
+    subscription_id: int
 
 
 @user_router.post('/{user_id}/subcribe')
 async def user_buy_subscription(user_id: str, req: SubcribeRequest) -> OKResponse:
     await service.subscribe_user(
         user_id=user_id,
-        subscription_id=req.subcription_id,
+        subscription_id=req.subscription_id,
     )
 
     return OKResponse(status=True)

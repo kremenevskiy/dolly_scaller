@@ -53,8 +53,11 @@ class UserSubscription(BaseModel):
     end_date: datetime.datetime
     status: SubcriptionStatus
 
-    photos_by_prompt_left: int
-    photos_by_image_left: int
+    generation_photos_left: int
+
+    def is_generations_left(self) -> bool:
+        return self.generation_photos_left <= 0
+
 
 
 # TODO: проверить что и в старах и в рублях проходит через эту схему

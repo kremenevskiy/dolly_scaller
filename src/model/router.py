@@ -54,8 +54,7 @@ class OperationLimitErrorWithPending(BaseModel):
 
     code: str
     message: str
-    image_limit: int
-    promt_limit: int
+    generations_limit: int
     next_sub: str
     operation: str
 
@@ -86,8 +85,7 @@ async def generate_image_by_promnt(model_name: str, authorization: str = Header(
         err = OperationLimitErrorWithPending(
             operation=e.operation.value,
             message=e.detail,
-            image_limit=e.current_limit_image,
-            promt_limit=e.current_limit_promt,
+            generations_limit=e.current_limit,
             next_sub=datetime_to_gmt_str(e.next_sub),
             code='operation_out_limit_with_pending',
         )
@@ -110,8 +108,7 @@ async def generate_image_by_image(model_name: str, authorization: str = Header(N
         err = OperationLimitErrorWithPending(
             operation=e.operation.value,
             message=e.detail,
-            image_limit=e.current_limit_image,
-            promt_limit=e.current_limit_promt,
+            generations_limit=e.current_limit,
             next_sub=datetime_to_gmt_str(e.next_sub),
             code='operation_out_limit_with_pending',
         )
