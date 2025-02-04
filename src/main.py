@@ -9,6 +9,7 @@ from src.config import settings
 from src.model.router import model_router
 from src.subscription_details.router import subscription_router
 from src.user.router import user_router
+from src.user_profile.router import user_profile_router
 
 
 @asynccontextmanager
@@ -35,6 +36,7 @@ app.add_middleware(
 app.include_router(user_router)
 app.include_router(model_router)
 app.include_router(subscription_router)
+app.include_router(user_profile_router)
 
 
 @app.get('/healthcheck', include_in_schema=False)
