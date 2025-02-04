@@ -22,7 +22,7 @@ def upgrade() -> None:
         CREATE TABLE formats (
             id SERIAL PRIMARY KEY,
             format VARCHAR(255) NOT NULL,
-            heigth INT NOT NULL,
+            height INT NOT NULL,
             width INT NOT NULL
         );
     """)
