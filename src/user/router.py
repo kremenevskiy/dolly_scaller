@@ -54,7 +54,7 @@ class SubcribeRequest(BaseModel):
     subscription_id: int
 
 
-@user_router.post('/{user_id}/subcribe')
+@user_router.post('/{user_id}/subscribe')
 async def user_buy_subscription(user_id: str, req: SubcribeRequest) -> OKResponse:
     await service.subscribe_user(
         user_id=user_id,
