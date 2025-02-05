@@ -99,12 +99,10 @@ class UserRepository:
         )
 
     @staticmethod
-    async def add_generations_to_active_subscription(
-        user_id: str, photos: int
-    ) -> None:
+    async def add_generations_to_active_subscription(user_id: str, photos: int) -> None:
         query = """
             UPDATE user_subscriptions
-            SET generation_photos_left = generation_photos_left + $1,
+            SET generation_photos_left = generation_photos_left + $1
             WHERE user_id = $2 AND status = 'active';
         """
         await DatabaseManager.execute(query, photos, user_id)
@@ -127,7 +125,6 @@ class UserRepository:
         """
         await DatabaseManager.execute(query, models_count, user_id)
 
-    @staticmethod
     @staticmethod
     async def get_user_subscription(
         user_id: str, status: model.SubcriptionStatus
