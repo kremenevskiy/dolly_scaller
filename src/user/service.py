@@ -40,15 +40,50 @@ async def get_user_id_from_username(username: str) -> str:
 
 async def add_user_to_whitelist(username: str) -> str:
     user_id = await get_user_id_from_username(username=username)
+
+    await activate_whitelist_subscription(user_id)
     await user_repository.add_user_to_whitelist(user_id)
+
     return user_id
+
+
+async def activate_whitelist_subscription(user_id: str) -> None:
+    await finish_active_sub(user_id)
+
+    WHITELIST_GENERATION_COUNT = 1000000
+    WHITELIST_MODELS_COUNT = 2
+
+    new_user_subscription = model.UserSubscription(
+        user_id=user_id,
+        subscription_id=-1,
+        start_date=datetime.datetime.now(),
+        status=model.SubcriptionStatus.ACTIVE,
+        end_date=datetime.datetime.now() + datetime.timedelta(days=365),
+        generation_photos_left=WHITELIST_GENERATION_COUNT,
+    )
+
+    await user_repository.save_user_subscription(new_user_subscription)
+    await user_repository.set_user_models_limit(user_id, WHITELIST_MODELS_COUNT)
+
+
+async def finish_active_sub(user_id: str) -> None:
+    active_sub = await user_repository.get_active_user_subscription(user_id)
+    if active_sub is None:
+        raise exception.NoActiveSubscription
+
+    active_sub.status = model.SubcriptionStatus.FINISHED
+
+    await user_repository.save_user_subscription(active_sub)
 
 
 async def delete_user_from_whitelist(username: str) -> None:
     user_id = await get_user_id_from_username(username=username)
+
     is_success = await user_repository.delete_user_from_whitelist(user_id)
     if not is_success:
         raise exception.UserNotWhitelisted
+
+    await finish_active_sub(user_id)
 
 
 async def get_active_subcribe(user_id: str) -> model.UserSubscription | None:
@@ -91,7 +126,7 @@ async def subscribe_user(user_id: str, subscription_id: int) -> None:
         # Add generations to active subscription
         await user_repository.add_generations_to_active_subscription(
             user_id,
-            photos=subscription.generation_photos_left,
+            photos=subscription.generation_photos_count,
         )
 
     elif subscription.subscription_type == subscription_details_model.SubscriptionType.MODELS.value:
