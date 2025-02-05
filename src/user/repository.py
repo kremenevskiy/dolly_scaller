@@ -161,7 +161,7 @@ class UserRepository:
         """
         await DatabaseManager.execute(
             update_subscription_query,
-            user_sub.status,
+            user_sub.status.value,
             user_sub.id,
         )
 
