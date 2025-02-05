@@ -30,7 +30,6 @@ async def get_user_id_from_username(username: str) -> str:
 
 async def add_user_to_whitelist(username: str) -> str:
     user_id = await get_user_id_from_username(username=username)
-    print(f'user_id: {user_id}')
     await user_repository.add_user_to_whitelist(user_id)
     return user_id
 
