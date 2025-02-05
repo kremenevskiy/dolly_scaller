@@ -48,7 +48,10 @@ async def add_user_to_whitelist(username: str) -> str:
 
 
 async def activate_whitelist_subscription(user_id: str) -> None:
-    await finish_active_sub(user_id)
+    try:
+        await finish_active_sub(user_id)
+    except exception.NoActiveSubscription:
+        pass
 
     WHITELIST_GENERATION_COUNT = 1000000
     WHITELIST_MODELS_COUNT = 2
@@ -63,7 +66,7 @@ async def activate_whitelist_subscription(user_id: str) -> None:
     )
 
     await user_repository.save_user_subscription(new_user_subscription)
-    await user_repository.set_user_models_limit(user_id, WHITELIST_MODELS_COUNT)
+    await user_repository.increase_user_models_limit(user_id, WHITELIST_MODELS_COUNT)
 
 
 async def finish_active_sub(user_id: str) -> None:
@@ -73,7 +76,7 @@ async def finish_active_sub(user_id: str) -> None:
 
     active_sub.status = model.SubcriptionStatus.FINISHED
 
-    await user_repository.save_user_subscription(active_sub)
+    await user_repository.update_user_subscription(active_sub)
 
 
 async def delete_user_from_whitelist(username: str) -> None:

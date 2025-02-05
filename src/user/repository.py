@@ -80,36 +80,6 @@ class UserRepository:
         return True
 
     @staticmethod
-    async def save_user_subscription(user_subscription: model.UserSubscription) -> None:
-        # Step 2: Insert the new subscription as active
-        insert_query = """
-            INSERT INTO user_subscriptions (user_id, subscription_id, start_date, end_date, status,
-                                            generation_photos_left)
-            VALUES ($1, $2, $3, $4, $5, $6);
-        """
-
-        await DatabaseManager.execute(
-            insert_query,
-            user_subscription.user_id,
-            user_subscription.subscription_id,
-            user_subscription.start_date,
-            user_subscription.end_date,
-            user_subscription.status.value,
-            user_subscription.generation_photos_left,
-        )
-
-    @staticmethod
-    async def add_generations_to_active_subscription(
-        user_id: str, photos: int
-    ) -> None:
-        query = """
-            UPDATE user_subscriptions
-            SET generation_photos_left = generation_photos_left + $1,
-            WHERE user_id = $2 AND status = 'active';
-        """
-        await DatabaseManager.execute(query, photos, user_id)
-
-    @staticmethod
     async def increase_user_models_limit(user_id: str, models_count: int) -> None:
         query = """
             UPDATE users
@@ -127,7 +97,6 @@ class UserRepository:
         """
         await DatabaseManager.execute(query, models_count, user_id)
 
-    @staticmethod
     @staticmethod
     async def get_user_subscription(
         user_id: str, status: model.SubcriptionStatus
@@ -181,6 +150,55 @@ class UserRepository:
             user_subscription.generation_photos_left,
             user_subscription.user_id,
         )
+
+    @staticmethod
+    async def update_user_subscription_status(
+            user_sub: model.UserSubscription, status: model.SubcriptionStatus
+    ) -> None:
+        # Update subscription details
+        update_subscription_query = """
+            UPDATE user_subscriptions
+            SET status = $1
+            WHERE id = $2;
+        """
+        await DatabaseManager.execute(
+            update_subscription_query,
+            user_sub.status,
+            user_sub.id,
+        )
+
+    @staticmethod
+    async def save_user_subscription(user_subscription: model.UserSubscription) -> None:
+        # Step 2: Insert the new subscription as active
+        insert_query = """
+            INSERT INTO user_subscriptions (user_id, subscription_id, start_date, end_date, status,
+                                            generation_photos_left)
+            VALUES ($1, $2, $3, $4, $5, $6);
+        """
+
+        await DatabaseManager.execute(
+            insert_query,
+            user_subscription.user_id,
+            user_subscription.subscription_id,
+            user_subscription.start_date,
+            user_subscription.end_date,
+            user_subscription.status.value,
+            user_subscription.generation_photos_left,
+        )
+
+    @staticmethod
+    async def add_generations_to_active_subscription(
+        user_id: str, photos: int
+    ) -> None:
+        query = """
+            UPDATE user_subscriptions
+            SET generation_photos_left = generation_photos_left + $1,
+            WHERE user_id = $2 AND status = 'active';
+        """
+        await DatabaseManager.execute(query, photos, user_id)
+
+
+
 
 
 class PaymentRepository:
