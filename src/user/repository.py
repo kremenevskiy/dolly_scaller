@@ -153,7 +153,7 @@ class UserRepository:
 
     @staticmethod
     async def update_user_subscription_status(
-            user_sub: model.UserSubscription, status: model.SubcriptionStatus
+            user_sub: model.UserSubscription
     ) -> None:
         # Update subscription details
         update_subscription_query = """

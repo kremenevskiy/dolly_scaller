@@ -76,7 +76,7 @@ async def finish_active_sub(user_id: str) -> None:
 
     active_sub.status = model.SubcriptionStatus.FINISHED
 
-    await user_repository.update_user_subscription(active_sub)
+    await user_repository.update_user_subscription_status(active_sub)
 
 
 async def delete_user_from_whitelist(username: str) -> None:
