@@ -119,6 +119,15 @@ class UserRepository:
         await DatabaseManager.execute(query, models_count, user_id)
 
     @staticmethod
+    async def set_user_models_limit(user_id: str, models_count: int) -> None:
+        query = """
+            UPDATE users
+            SET models_max = $1
+            WHERE user_id = $2;
+        """
+        await DatabaseManager.execute(query, models_count, user_id)
+
+    @staticmethod
     @staticmethod
     async def get_user_subscription(
         user_id: str, status: model.SubcriptionStatus
