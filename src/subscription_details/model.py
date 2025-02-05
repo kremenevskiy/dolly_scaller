@@ -20,8 +20,7 @@ class Subscription(BaseModel):
     start_date: datetime.datetime
     end_date: datetime.datetime | None
     models_count: int
-    photos_by_prompt_count: int
-    photos_by_image_count: int
+    generation_photos_count: int
 
     def is_monthly_sub(self) -> bool:
         return self.subscription_type == SubscriptionType.MONTHLY.value
@@ -38,6 +37,5 @@ class Subscription(BaseModel):
             start_date=row['start_date'],
             end_date=row['end_date'],
             models_count=row['models_count'],
-            photos_by_prompt_count=row['photos_by_prompt_count'],
-            photos_by_image_count=row['photos_by_image_count'],
+            generation_photos_count=row['generation_photos_count'],
         )
