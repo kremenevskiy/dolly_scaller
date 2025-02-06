@@ -129,6 +129,45 @@ async def subscribe_user(user_id: str, subscription_id: int) -> None:
         await user_repository.increase_user_models_limit(user_id, subscription.models_count)
 
 
+async def refund_user(user_id: str, subscription_id: int):
+    subscription = await subscription_details_service.get_subscription_details(
+        subscription_id=subscription_id
+    )
+
+    active_sub = await user_repository.get_active_user_subscription(user_id)
+    if active_sub is None:
+        raise exception.NoActiveSubscription
+
+    if subscription.is_monthly_sub():
+        last_sub = await user_repository.get_last_user_subscription(user_id, subscription_id)
+        if last_sub is None:
+            raise exception.NoActiveSubscription
+
+        last_sub.status = model.SubcriptionStatus.INACTIVE
+
+        await user_repository.update_user_subscription_status(last_sub)
+        await user_repository.increase_user_models_limit(user_id, -subscription.models_count)
+
+    elif (
+        subscription.subscription_type
+        == subscription_details_model.SubscriptionType.GENERATIONS.value
+    ):
+        if active_sub is None:
+            raise exception.NoActiveSubscription
+
+        # Add generations to active subscription
+        await user_repository.add_generations_to_active_subscription(
+            user_id,
+            photos=-subscription.generation_photos_count,
+        )
+
+    elif subscription.subscription_type == subscription_details_model.SubscriptionType.MODELS.value:
+        if active_sub is None:
+            raise exception.NoActiveSubscription
+        # Increase max models count for user
+        await user_repository.increase_user_models_limit(user_id, -subscription.models_count)
+
+
 async def store_user_payment(user_id: str, payment_details: dict) -> None:
     await PaymentRepository.save_payment(user_id, payment_details)
 
@@ -213,3 +252,15 @@ async def handle_raised_limits(
 
 async def get_user_models_count(user_id: str) -> int:
     return await model_service.get_user_models_count(user_id)
+
+
+async def update_user_limits(user_id: str, generation_count: int, models_count: int):
+    user_subscription = await user_repository.get_active_user_subscription(user_id=user_id)
+    if user_subscription is None:
+        raise exception.NoActiveSubscription
+
+    await user_repository.increase_user_models_limit(user_id, models_count)
+    await user_repository.add_generations_to_active_subscription(
+        user_id,
+        photos=generation_count,
+    )

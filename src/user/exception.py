@@ -26,6 +26,11 @@ class NoActiveSubscription(HTTPException):
         super().__init__(status_code=403, detail='User has no active subscription')
 
 
+class SubscripitonNotFound(HTTPException):
+    def __init__(self):
+        super().__init__(status_code=404, detail='Subscription Not Found')
+
+
 class OperationOutOfLimitWithPending(HTTPException):
     def __init__(
         self,

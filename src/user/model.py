@@ -42,6 +42,7 @@ class SubcriptionStatus(Enum):
     ACTIVE = 'active'
     PENDING = 'pending'
     FINISHED = 'finished'
+    INACTIVE = 'inactive'
 
 
 class UserSubscription(BaseModel):

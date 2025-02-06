@@ -38,18 +38,6 @@ async def user_profile(user_id: str) -> UserProfile:
     return UserProfile(user=user, user_subscription=sub, model_count=count)
 
 
-@user_router.get('/add-whitelist')
-async def add_user_to_whitelist(username: str) -> OKResponseWithUserID:
-    user_id = await service.add_user_to_whitelist(username=username)
-    return OKResponseWithUserID(status=True, user_id=user_id)
-
-
-@user_router.get('/delete-whitelist')
-async def delete_user_from_whitelist(username: str) -> OKResponse:
-    await service.delete_user_from_whitelist(username=username)
-    return OKResponse(status=True)
-
-
 class SubcribeRequest(BaseModel):
     subscription_id: int
 
@@ -88,5 +76,37 @@ async def active_subscription(user_id: str) -> OKResponse:
 @user_router.get('/{user_id}/limit/model')
 async def check_user_model_limit(user_id: str) -> OKResponse:
     await service.check_subscription_limits(user_id, model.OperationType.CREATE_MODEL)
+
+    return OKResponse(status=True)
+
+
+# admin
+@user_router.get('/add-whitelist')
+async def add_user_to_whitelist(username: str) -> OKResponseWithUserID:
+    user_id = await service.add_user_to_whitelist(username=username)
+    return OKResponseWithUserID(status=True, user_id=user_id)
+
+
+@user_router.get('/delete-whitelist')
+async def delete_user_from_whitelist(username: str) -> OKResponse:
+    await service.delete_user_from_whitelist(username=username)
+    return OKResponse(status=True)
+
+
+class UpdateLimitsRequest(BaseModel):
+    update_generation_count: int
+    update_models_count: int
+
+
+@user_router.put('/{user_id}/admin/limits')
+async def add_user_limits(user_id: str, req: UpdateLimitsRequest) -> OKResponse:
+    await service.update_user_limits(user_id, req.update_generation_count, req.update_models_count)
+
+    return OKResponse(status=True)
+
+
+@user_router.post('/{user_id}/refund')
+async def refund_user(user_id: str, req: SubcribeRequest) -> OKResponse:
+    await service.refund_user(user_id, req.subscription_id)
 
     return OKResponse(status=True)
