@@ -60,7 +60,6 @@ class UserSubscription(BaseModel):
         return self.generation_photos_left <= 0
 
 
-
 # TODO: проверить что и в старах и в рублях проходит через эту схему
 class PaymentDetails(BaseModel):
     currency: str
@@ -89,3 +88,9 @@ class OperationType(Enum):
     GENERATE_BY_IMAGE = 'generate_by_image'
     GENERATE_BY_PROMNT = 'generate_by_prompt'
     CREATE_MODEL = 'create_model'
+
+
+class UserProfile(BaseModel):
+    user: User
+    user_subscription: UserSubscription
+    model_count: int

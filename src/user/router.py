@@ -8,6 +8,7 @@ from src.user import (
     service,
 )
 from src.user.exception import NoActiveSubscription
+from src.logger import logger
 
 user_router = APIRouter(prefix='/user')
 
@@ -19,14 +20,8 @@ async def create_new_user(user_request: model.User) -> OKResponse:
     return OKResponse(status=True)
 
 
-class UserProfile(BaseModel):
-    user: model.User
-    user_subscription: model.UserSubscription
-    model_count: int
-
-
 @user_router.get('/profile/{user_id}')
-async def user_profile(user_id: str) -> UserProfile:
+async def user_profile(user_id: str) -> model.UserProfile:
     user = await service.get_user(user_id)
 
     sub = await service.get_active_subcribe(user_id)
@@ -35,11 +30,21 @@ async def user_profile(user_id: str) -> UserProfile:
 
     count = await service.get_user_models_count(user_id)
 
-    return UserProfile(user=user, user_subscription=sub, model_count=count)
+    return model.UserProfile(user=user, user_subscription=sub, model_count=count)
 
 
 class SubcribeRequest(BaseModel):
     subscription_id: int
+
+
+@user_router.get('/find/profile')
+async def find_user(username: str) -> model.UserProfile:
+    logger.info(f'find user: username={username}')
+    user = await service.find_user(username=username)
+
+    logger.info(f'user found: user={user}')
+
+    return await service.get_user_profile(user)
 
 
 @user_router.post('/{user_id}/subscribe')

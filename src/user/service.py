@@ -1,5 +1,6 @@
 import datetime
 
+from src.logger import logger
 from src.model import service as model_service
 from src.subscription_details import model as subscription_details_model
 from src.subscription_details import service as subscription_details_service
@@ -19,6 +20,28 @@ async def get_user(user_id: str) -> model.User:
         raise exception.UserNotFound
 
     return user
+
+
+async def find_user(user_id: str = '', username: str = '') -> model.User:
+    if user_id != '':
+        return await get_user(user_id)
+
+    if username != '':
+        user_id = await get_user_id_from_username(username)
+
+        return await get_user(user_id)
+
+    raise exception.UserNotFound
+
+
+async def get_user_profile(user: model.User) -> model.UserProfile:
+    sub = await get_active_subcribe(user.user_id)
+    if sub is None:
+        raise exception.NoActiveSubscription()
+
+    count = await get_user_models_count(user.user_id)
+
+    return model.UserProfile(user=user, user_subscription=sub, model_count=count)
 
 
 async def get_user_id_from_username(username: str) -> str:
