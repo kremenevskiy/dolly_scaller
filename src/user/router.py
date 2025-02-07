@@ -19,6 +19,28 @@ async def create_new_user(user_request: model.User) -> OKResponse:
 
     return OKResponse(status=True)
 
+# admin
+@user_router.get('/add-whitelist')
+async def add_user_to_whitelist(username: str) -> OKResponseWithUserID:
+    user_id = await service.add_user_to_whitelist(username=username)
+    return OKResponseWithUserID(status=True, user_id=user_id)
+
+
+@user_router.get('/delete-whitelist')
+async def delete_user_from_whitelist(username: str) -> OKResponse:
+    await service.delete_user_from_whitelist(username=username)
+    return OKResponse(status=True)
+
+
+@user_router.get('/find/profile')
+async def find_user(username: str) -> model.UserProfile:
+    logger.info(f'find user: username={username}')
+    user = await service.find_user(username=username)
+
+    logger.info(f'user found: user={user}')
+
+    return await service.get_user_profile(user)
+
 
 @user_router.get('/profile/{user_id}')
 async def user_profile(user_id: str) -> model.UserProfile:
@@ -35,16 +57,6 @@ async def user_profile(user_id: str) -> model.UserProfile:
 
 class SubcribeRequest(BaseModel):
     subscription_id: int
-
-
-@user_router.get('/find/profile')
-async def find_user(username: str) -> model.UserProfile:
-    logger.info(f'find user: username={username}')
-    user = await service.find_user(username=username)
-
-    logger.info(f'user found: user={user}')
-
-    return await service.get_user_profile(user)
 
 
 @user_router.post('/{user_id}/subscribe')
@@ -82,19 +94,6 @@ async def active_subscription(user_id: str) -> OKResponse:
 async def check_user_model_limit(user_id: str) -> OKResponse:
     await service.check_subscription_limits(user_id, model.OperationType.CREATE_MODEL)
 
-    return OKResponse(status=True)
-
-
-# admin
-@user_router.get('/add-whitelist')
-async def add_user_to_whitelist(username: str) -> OKResponseWithUserID:
-    user_id = await service.add_user_to_whitelist(username=username)
-    return OKResponseWithUserID(status=True, user_id=user_id)
-
-
-@user_router.get('/delete-whitelist')
-async def delete_user_from_whitelist(username: str) -> OKResponse:
-    await service.delete_user_from_whitelist(username=username)
     return OKResponse(status=True)
 
 
