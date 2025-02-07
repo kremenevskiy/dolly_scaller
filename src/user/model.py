@@ -42,6 +42,7 @@ class SubcriptionStatus(Enum):
     ACTIVE = 'active'
     PENDING = 'pending'
     FINISHED = 'finished'
+    INACTIVE = 'inactive'
 
 
 class UserSubscription(BaseModel):
@@ -57,7 +58,6 @@ class UserSubscription(BaseModel):
 
     def is_generations_left(self) -> bool:
         return self.generation_photos_left <= 0
-
 
 
 # TODO: проверить что и в старах и в рублях проходит через эту схему
@@ -88,3 +88,9 @@ class OperationType(Enum):
     GENERATE_BY_IMAGE = 'generate_by_image'
     GENERATE_BY_PROMNT = 'generate_by_prompt'
     CREATE_MODEL = 'create_model'
+
+
+class UserProfile(BaseModel):
+    user: User
+    user_subscription: UserSubscription
+    model_count: int

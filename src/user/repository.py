@@ -136,6 +136,37 @@ class UserRepository:
         return await UserRepository.get_user_subscription(user_id, model.SubcriptionStatus.ACTIVE)
 
     @staticmethod
+    async def get_last_user_subscription(user_id: str, subscription_id: int) -> model.UserSubscription | None:
+        query = """
+            SELECT id, subscription_id, user_id, start_date, end_date,
+                   generation_photos_left, status
+            FROM user_subscriptions
+            WHERE user_id = $1 and subscription_id = $2
+            ORDER BY start_date desc
+            LIMIT 1;
+        """
+        row = await DatabaseManager.fetchrow(query, user_id, subscription_id)
+
+        if not row:
+            return None
+
+        return (
+            model.UserSubscription(
+                id=row['id'],
+                subscription_id=row['subscription_id'],
+                user_id=row['user_id'],
+                start_date=row['start_date'],
+                end_date=row['end_date'],
+                status=row['status'],
+                generation_photos_left=row['generation_photos_left'],
+            )
+            if row
+            else None
+        )
+
+
+
+    @staticmethod
     async def update_user_subscription(
         user_subscription: model.UserSubscription,
     ) -> None:
