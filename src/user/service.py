@@ -108,6 +108,17 @@ async def get_active_subcribe(user_id: str) -> model.UserSubscription | None:
     return user_sub
 
 
+async def get_referral_info(user_id: str) -> model.UserReferralInfo:
+    referral_joins = await user_repository.count_referral_joins(user_id)
+    referral_purchases = await user_repository.count_referral_purchases(user_id)
+    bonus_generations = await user_repository.get_bonus_generations(user_id)
+    return model.UserReferralInfo(
+        referral_joins=referral_joins,
+        referral_purchases=referral_purchases,
+        bonus_generations=bonus_generations,
+    )
+
+
 async def subscribe_user(user_id: str, subscription_id: int) -> None:
     subscription = await subscription_details_service.get_subscription_details(
         subscription_id=subscription_id

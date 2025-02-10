@@ -24,6 +24,8 @@ class User(BaseModel):
 
     date_joined: datetime.datetime | None = None
 
+    referral_id: str | None = None
+
     @classmethod
     def from_row(cls, row):
         return cls(
@@ -35,6 +37,7 @@ class User(BaseModel):
             user_type=UserType(row['user_type']),
             models_max=row.get('models_max', 0),
             date_joined=row.get('date_joined'),
+            referral_id=row.get('referral_id'),
         )
 
 
@@ -90,7 +93,14 @@ class OperationType(Enum):
     CREATE_MODEL = 'create_model'
 
 
+class UserReferralInfo(BaseModel):
+    referral_joins: int = 0
+    referral_purchases: int = 0
+    bonus_generations: int = 0
+
+
 class UserProfile(BaseModel):
     user: User
     user_subscription: UserSubscription
+    referral_info: UserReferralInfo
     model_count: int
