@@ -124,9 +124,15 @@ async def get_referral_info(user_id: str) -> model.UserReferralInfo:
     )
 
 
-async def subscribe_user(user_id: str, subscription_id: int) -> None:
+async def subscribe_user(user_id: str, subscription_id: int) -> model.UserSubscriptionAdditional | None:
     await apply_subscription(user_id, subscription_id)
-    await reward_ref(user_id, subscription_id)
+    ref_additional = await reward_ref(user_id, subscription_id)
+    if ref_additional is not None:
+        return model.UserSubscriptionAdditional(
+            referal_info=ref_additional,
+        )
+
+    return None
 
 
 async def apply_subscription(user_id: str, subscription_id: int) -> None:
@@ -196,7 +202,7 @@ async def apply_subscription(user_id: str, subscription_id: int) -> None:
         await user_repository.save_user_subscription(new_user_subscription)
 
 
-async def reward_ref(user_id: str, sub_id: int):
+async def reward_ref(user_id: str, sub_id: int) -> model.ReferalBonusGenerations | None:
     user = await get_user(user_id)
 
     if user.referral_id is None:
@@ -214,15 +220,23 @@ async def reward_ref(user_id: str, sub_id: int):
         )
     )
 
+    return model.ReferalBonusGenerations(
+        referer_id=user.referral_id,
+        bonus_count=ref_sub.generation_photos_count
+    )
 
-async def add_bonus_ref_count(active_sub: model.UserSubscription):
-    active_sub.generation_photos_left += await user_repository.get_ref_bonus_count(
+
+async def add_bonus_ref_count(active_sub: model.UserSubscription) -> int:
+    bonus_count = await user_repository.get_ref_bonus_count(
         active_sub.user_id
     )
 
+    active_sub.generation_photos_left += bonus_count
     ref_sub = await ref_subscription()
 
     await user_repository.delete_ref_bonus(active_sub.user_id, ref_sub.id)
+
+    return bonus_count
 
 
 async def ref_subscription() -> subscription_details_model.Subscription:

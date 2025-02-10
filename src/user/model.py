@@ -1,5 +1,6 @@
 import datetime
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -61,6 +62,16 @@ class UserSubscription(BaseModel):
 
     def is_generations_left(self) -> bool:
         return self.generation_photos_left <= 0
+
+
+class ReferalBonusGenerations(BaseModel):
+    referer_id: str
+    bonus_count: int
+
+
+class UserSubscriptionAdditional(BaseModel):
+    referal_info: Optional[ReferalBonusGenerations] = None
+
 
 
 # TODO: проверить что и в старах и в рублях проходит через эту схему

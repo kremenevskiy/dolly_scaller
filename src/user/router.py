@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter
 from pydantic import BaseModel
 
@@ -50,14 +51,25 @@ class SubcribeRequest(BaseModel):
     subscription_id: int
 
 
+class SubscribeResponse(OKResponse):
+    referal_info: Optional[model.ReferalBonusGenerations] = None
+
+
 @user_router.post('/{user_id}/subscribe')
-async def user_buy_subscription(user_id: str, req: SubcribeRequest) -> OKResponse:
-    await service.subscribe_user(
+async def user_buy_subscription(user_id: str, req: SubcribeRequest) -> SubscribeResponse:
+    resp = SubscribeResponse(
+        status=True
+    )
+
+    additional = await service.subscribe_user(
         user_id=user_id,
         subscription_id=req.subscription_id,
     )
 
-    return OKResponse(status=True)
+    if additional is not None:
+        resp.referal_info = additional.referal_info
+
+    return resp
 
 
 @user_router.post('/{user_id}/add-payment-info')
