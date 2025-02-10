@@ -26,3 +26,15 @@ class SubscriptionRepository:
         """
         row = await DatabaseManager.fetchrow(query, subscription_id)
         return model.Subscription.from_row(row) if row else None
+
+    @staticmethod
+    async def get_subscription_by_name(name: str) -> model.Subscription | None:
+        query = """
+            SELECT id, subscription_name, subscription_type, cost_rubles, cost_stars,
+                duration, start_date, end_date,
+                models_count, generation_photos_count
+            FROM subscriptions_details
+            WHERE subscription_name = $1;
+        """
+        row = await DatabaseManager.fetchrow(query, name)
+        return model.Subscription.from_row(row) if row else None

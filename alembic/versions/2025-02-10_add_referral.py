@@ -32,8 +32,9 @@ def upgrade():
             id SERIAL PRIMARY KEY,
             user_id VARCHAR(255) NOT NULL,
             referral_id VARCHAR(255) NOT NULL,
-            subscription_id VARCHAR(255) NOT NULL,
-            bonus_generations INT NOT NULL DEFAULT 0
+            subscription_id INT NOT NULL,
+            bonus_generations INT NOT NULL DEFAULT 0,
+            refer_at TIMESTAMP DEFAULT now()
         );
     """)
 

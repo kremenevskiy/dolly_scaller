@@ -104,3 +104,10 @@ class UserProfile(BaseModel):
     user_subscription: UserSubscription
     referral_info: UserReferralInfo
     model_count: int
+
+
+class ReferalLog(BaseModel):
+    referer_id: str
+    referral_id: str
+    subscription_id: int
+    bonus_generations: int

@@ -41,7 +41,12 @@ async def get_user_profile(user: model.User) -> model.UserProfile:
 
     count = await get_user_models_count(user.user_id)
 
-    return model.UserProfile(user=user, user_subscription=sub, model_count=count)
+    referral_info = await get_referral_info(user.user_id)
+
+    return model.UserProfile(
+        user=user, user_subscription=sub,
+        model_count=count, referral_info=referral_info,
+    )
 
 
 async def get_user_id_from_username(username: str) -> str:
@@ -120,6 +125,11 @@ async def get_referral_info(user_id: str) -> model.UserReferralInfo:
 
 
 async def subscribe_user(user_id: str, subscription_id: int) -> None:
+    await apply_subscription(user_id, subscription_id)
+    await reward_ref(user_id, subscription_id)
+
+
+async def apply_subscription(user_id: str, subscription_id: int) -> None:
     subscription = await subscription_details_service.get_subscription_details(
         subscription_id=subscription_id
     )
@@ -139,6 +149,9 @@ async def subscribe_user(user_id: str, subscription_id: int) -> None:
             end_date=datetime.datetime.now() + datetime.timedelta(days=subscription.duration),
             generation_photos_left=subscription.generation_photos_count,
         )
+
+        if active_sub is None:
+            await add_bonus_ref_count(new_user_subscription)
 
         await user_repository.save_user_subscription(new_user_subscription)
         await user_repository.increase_user_models_limit(user_id, subscription.models_count)
@@ -161,6 +174,59 @@ async def subscribe_user(user_id: str, subscription_id: int) -> None:
             raise exception.NoActiveSubscription
         # Increase max models count for user
         await user_repository.increase_user_models_limit(user_id, subscription.models_count)
+
+    elif (
+        subscription.subscription_type == subscription_details_model.
+            SubscriptionType.REFERRAL_GENERATIONS.value
+    ):
+        if active_sub is not None:
+            return await user_repository.add_generations_to_active_subscription(
+                user_id, subscription.generation_photos_count,
+            )
+
+        new_user_subscription = model.UserSubscription(
+            user_id=user_id,
+            subscription_id=subscription_id,
+            start_date=datetime.datetime.now(),
+            status=model.SubcriptionStatus.PENDING,
+            end_date=datetime.datetime.now() + datetime.timedelta(days=subscription.duration),
+            generation_photos_left=subscription.generation_photos_count,
+        )
+
+        await user_repository.save_user_subscription(new_user_subscription)
+
+
+async def reward_ref(user_id: str, sub_id: int):
+    user = await get_user(user_id)
+
+    if user.referral_id is None:
+        return
+
+    ref_sub = await ref_subscription()
+
+    await apply_subscription(user_id, ref_sub.id)
+    await add_referral_log(
+        model.ReferalLog(
+            referer_id=user.referral_id,
+            referral_id=user.user_id,
+            subscription_id=sub_id,
+            bonus_generations=ref_sub.generation_photos_count,
+        )
+    )
+
+
+async def add_bonus_ref_count(active_sub: model.UserSubscription):
+    active_sub.generation_photos_left += await user_repository.get_ref_bonus_count(
+        active_sub.user_id
+    )
+
+    ref_sub = await ref_subscription()
+
+    await user_repository.delete_ref_bonus(active_sub.user_id, ref_sub.id)
+
+
+async def ref_subscription() -> subscription_details_model.Subscription:
+    return await subscription_details_service.get_subscription_by_name('referral_generations_base_pack')
 
 
 async def refund_user(user_id: str, subscription_id: int):
@@ -298,3 +364,9 @@ async def update_user_limits(user_id: str, generation_count: int, models_count: 
         user_id,
         photos=generation_count,
     )
+
+
+async def add_referral_log(log: model.ReferalLog):
+    await user_repository.add_referral_log(log)
+
+

@@ -254,6 +254,38 @@ class UserRepository:
         """
         await DatabaseManager.execute(query, photos, user_id)
 
+    @staticmethod
+    async def add_referral_log(log: model.ReferalLog) -> None:
+        query = """
+            INSERT INTO referral_log(user_id, referral_id, subscription_id, bonus_generations)
+                VALUES ($1, $2, $3, $4)
+        """
+
+        await DatabaseManager.execute(query, log.referer_id,
+                                      log.referral_id, log.subscription_id,
+                                      log.bonus_generations
+                                      )
+
+    @staticmethod
+    async def get_ref_bonus_count(user_id: str) -> int:
+        query = """
+            SELECT sum(generation_photos_left) as cnt FROM user_subscriptions
+                INNER JOIN subscriptions_details sb on sb.id = subscription_id
+                WHERE user_id = $1 and status = 'pending' and
+                    sb.subscription_type = 'referral_generations'
+        """
+
+        return await DatabaseManager.fetchval(query, user_id)
+
+    @staticmethod
+    async def delete_ref_bonus(user_id: str, ref_sub_id: int):
+        query = """
+            DELETE FROM user_subscriptions WHERE user_id = $1 and
+                status = 'pending' and subscription_id = $2
+        """
+
+        await DatabaseManager.execute(query, user_id, ref_sub_id)
+
 
 class PaymentRepository:
     @staticmethod

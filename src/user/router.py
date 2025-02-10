@@ -5,7 +5,6 @@ from src.exceptions import NotFound
 from src.logger import logger
 from src.schemas import OKResponse, OKResponseWithUserID
 from src.user import model, service
-from src.user.exception import NoActiveSubscription
 
 user_router = APIRouter(prefix='/user')
 
@@ -44,15 +43,7 @@ async def find_user(username: str) -> model.UserProfile:
 async def user_profile(user_id: str) -> model.UserProfile:
     user = await service.get_user(user_id)
 
-    sub = await service.get_active_subcribe(user_id)
-    # if sub is None:
-    #     raise NoActiveSubscription()
-    referral_info = await service.get_referral_info(user_id)
-    count = await service.get_user_models_count(user_id)
-
-    return model.UserProfile(
-        user=user, user_subscription=sub, referral_info=referral_info, model_count=count
-    )
+    return await service.get_user_profile(user)
 
 
 class SubcribeRequest(BaseModel):
