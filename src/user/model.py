@@ -73,7 +73,6 @@ class UserSubscriptionAdditional(BaseModel):
     referal_info: Optional[ReferalBonusGenerations] = None
 
 
-
 # TODO: проверить что и в старах и в рублях проходит через эту схему
 class PaymentDetails(BaseModel):
     currency: str
@@ -112,7 +111,7 @@ class UserReferralInfo(BaseModel):
 
 class UserProfile(BaseModel):
     user: User
-    user_subscription: UserSubscription
+    user_subscription: UserSubscription | None
     referral_info: UserReferralInfo
     model_count: int
 

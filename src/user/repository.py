@@ -261,15 +261,14 @@ class UserRepository:
                 VALUES ($1, $2, $3, $4)
         """
 
-        await DatabaseManager.execute(query, log.referer_id,
-                                      log.referral_id, log.subscription_id,
-                                      log.bonus_generations
-                                      )
+        await DatabaseManager.execute(
+            query, log.referer_id, log.referral_id, log.subscription_id, log.bonus_generations
+        )
 
     @staticmethod
     async def get_ref_bonus_count(user_id: str) -> int:
         query = """
-            SELECT sum(generation_photos_left) as cnt FROM user_subscriptions
+            SELECT COALESCE(SUM(generation_photos_left), 0) as cnt  FROM user_subscriptions
                 INNER JOIN subscriptions_details sb on sb.id = subscription_id
                 WHERE user_id = $1 and status = 'pending' and
                     sb.subscription_type = 'referral_generations'
