@@ -383,5 +383,5 @@ async def update_user_limits(user_id: str, generation_count: int, models_count: 
     )
 
 
-async def add_referral_log(log: model.ReferalLog):
+async def add_referral_log(log: model.ReferralLog):
     await user_repository.add_referral_log(log)
