@@ -198,7 +198,7 @@ async def apply_subscription(user_id: str, subscription_id: int) -> None:
             subscription_id=subscription_id,
             start_date=datetime.datetime.now(),
             status=model.SubcriptionStatus.PENDING,
-            end_date=datetime.datetime.now() + datetime.timedelta(days=subscription.duration),
+            end_date=datetime.datetime.now() + datetime.timedelta(days=30),
             generation_photos_left=subscription.generation_photos_count,
         )
 
