@@ -112,9 +112,8 @@ class UserRepository:
     async def count_referral_purchases(referrer_id: str) -> int:
         query = """
         SELECT COUNT(*)
-        FROM user_subscriptions us
-        JOIN users u ON us.user_id = u.user_id
-        WHERE u.referrer_id = $1;
+        FROM referral_log rl
+        WHERE referrer_id = $1;
         """
         return await DatabaseManager.fetchval(query, referrer_id)
 
