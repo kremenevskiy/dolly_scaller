@@ -1,4 +1,3 @@
-from typing import Optional
 from fastapi import APIRouter
 from pydantic import BaseModel
 
@@ -47,19 +46,17 @@ async def user_profile(user_id: str) -> model.UserProfile:
     return await service.get_user_profile(user)
 
 
-class SubcribeRequest(BaseModel):
+class SubscribeRequest(BaseModel):
     subscription_id: int
 
 
 class SubscribeResponse(OKResponse):
-    referal_info: Optional[model.ReferalBonusGenerations] = None
+    referral_info: model.ReferralBonusGenerations | None = None
 
 
 @user_router.post('/{user_id}/subscribe')
-async def user_buy_subscription(user_id: str, req: SubcribeRequest) -> SubscribeResponse:
-    resp = SubscribeResponse(
-        status=True
-    )
+async def user_buy_subscription(user_id: str, req: SubscribeRequest) -> SubscribeResponse:
+    resp = SubscribeResponse(status=True)
 
     additional = await service.subscribe_user(
         user_id=user_id,
@@ -67,7 +64,7 @@ async def user_buy_subscription(user_id: str, req: SubcribeRequest) -> Subscribe
     )
 
     if additional is not None:
-        resp.referal_info = additional.referal_info
+        resp.referral_info = additional.referral_info
 
     return resp
 
@@ -84,9 +81,9 @@ async def user_add_payment_info(
     return OKResponse(status=True)
 
 
-@user_router.get('/{user_id}/subcription')
+@user_router.get('/{user_id}/subscription')
 async def active_subscription(user_id: str) -> OKResponse:
-    sub = await service.get_active_subcribe(user_id)
+    sub = await service.get_active_subscribe(user_id)
     if sub is None:
         raise NotFound()
 
@@ -113,7 +110,7 @@ async def add_user_limits(user_id: str, req: UpdateLimitsRequest) -> OKResponse:
 
 
 @user_router.post('/{user_id}/refund')
-async def refund_user(user_id: str, req: SubcribeRequest) -> OKResponse:
+async def refund_user(user_id: str, req: SubscribeRequest) -> OKResponse:
     await service.refund_user(user_id, req.subscription_id)
 
     return OKResponse(status=True)

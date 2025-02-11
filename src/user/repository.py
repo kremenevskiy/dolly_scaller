@@ -9,7 +9,7 @@ class UserRepository:
     async def create_new_user(user: model.User) -> None:
         query = """
             INSERT INTO users (user_id, username, user_first_name, user_last_name,
-                                tg_premium, user_type, models_max, referral_id)
+                                tg_premium, user_type, models_max, referrer_id)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             ON CONFLICT (user_id) DO UPDATE
             SET username = EXCLUDED.username,
@@ -18,7 +18,7 @@ class UserRepository:
                 tg_premium = EXCLUDED.tg_premium,
                 user_type = EXCLUDED.user_type,
                 models_max = EXCLUDED.models_max,
-                referral_id = EXCLUDED.referral_id
+                referrer_id = EXCLUDED.referrer_id
         """
 
         await DatabaseManager.execute(
@@ -30,14 +30,14 @@ class UserRepository:
             user.tg_premium,
             user.user_type.value,
             user.models_max,
-            user.referral_id,
+            user.referrer_id,
         )
 
     @staticmethod
     async def get_user_by_id(user_id: str) -> model.User | None:
         query = """
             SELECT user_id, username, user_first_name, user_last_name, tg_premium,
-                user_type, models_max, date_joined, referral_id
+                user_type, models_max, date_joined, referrer_id
             FROM users
             WHERE user_id = $1;
         """
@@ -100,32 +100,32 @@ class UserRepository:
         await DatabaseManager.execute(query, models_count, user_id)
 
     @staticmethod
-    async def count_referral_joins(user_id: str) -> int:
+    async def count_referral_joins(referrer_id: str) -> int:
         query = """
             SELECT COUNT(*)
             FROM users
-            WHERE referral_id = $1
+            WHERE referrer_id = $1
         """
-        return await DatabaseManager.fetchval(query, user_id)
+        return await DatabaseManager.fetchval(query, referrer_id)
 
     @staticmethod
-    async def count_referral_purchases(user_id: str) -> int:
+    async def count_referral_purchases(referrer_id: str) -> int:
         query = """
         SELECT COUNT(*)
         FROM user_subscriptions us
         JOIN users u ON us.user_id = u.user_id
-        WHERE u.referral_id = $1;
+        WHERE u.referrer_id = $1;
         """
-        return await DatabaseManager.fetchval(query, user_id)
+        return await DatabaseManager.fetchval(query, referrer_id)
 
     @staticmethod
-    async def get_bonus_generations(user_id: str) -> int:
+    async def get_bonus_generations(referrer_id: str) -> int:
         query = """
             SELECT COALESCE(SUM(bonus_generations), 0)
             FROM referral_log
-            WHERE user_id = $1;
+            WHERE referrer_id = $1;
         """
-        return await DatabaseManager.fetchval(query, user_id)
+        return await DatabaseManager.fetchval(query, referrer_id)
 
     @staticmethod
     async def get_user_subscription(
@@ -255,14 +255,14 @@ class UserRepository:
         await DatabaseManager.execute(query, photos, user_id)
 
     @staticmethod
-    async def add_referral_log(log: model.ReferalLog) -> None:
+    async def add_referral_log(log: model.ReferralLog) -> None:
         query = """
-            INSERT INTO referral_log(user_id, referral_id, subscription_id, bonus_generations)
+            INSERT INTO referral_log(referrer_id, referral_id, subscription_id, bonus_generations)
                 VALUES ($1, $2, $3, $4)
         """
 
         await DatabaseManager.execute(
-            query, log.referer_id, log.referral_id, log.subscription_id, log.bonus_generations
+            query, log.referrer_id, log.referral_id, log.subscription_id, log.bonus_generations
         )
 
     @staticmethod

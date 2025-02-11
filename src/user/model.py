@@ -25,7 +25,7 @@ class User(BaseModel):
 
     date_joined: datetime.datetime | None = None
 
-    referral_id: str | None = None
+    referrer_id: str | None = None
 
     @classmethod
     def from_row(cls, row):
@@ -38,7 +38,7 @@ class User(BaseModel):
             user_type=UserType(row['user_type']),
             models_max=row.get('models_max', 0),
             date_joined=row.get('date_joined'),
-            referral_id=row.get('referral_id'),
+            referrer_id=row.get('referrer_id'),
         )
 
 
@@ -64,13 +64,13 @@ class UserSubscription(BaseModel):
         return self.generation_photos_left <= 0
 
 
-class ReferalBonusGenerations(BaseModel):
-    referer_id: str
+class ReferralBonusGenerations(BaseModel):
+    referrer_id: str
     bonus_count: int
 
 
 class UserSubscriptionAdditional(BaseModel):
-    referal_info: Optional[ReferalBonusGenerations] = None
+    referral_info: Optional[ReferralBonusGenerations] = None
 
 
 # TODO: проверить что и в старах и в рублях проходит через эту схему
@@ -116,8 +116,8 @@ class UserProfile(BaseModel):
     model_count: int
 
 
-class ReferalLog(BaseModel):
-    referer_id: str
+class ReferralLog(BaseModel):
+    referrer_id: str
     referral_id: str
     subscription_id: int
     bonus_generations: int

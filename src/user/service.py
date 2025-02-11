@@ -35,9 +35,7 @@ async def find_user(user_id: str = '', username: str = '') -> model.User:
 
 
 async def get_user_profile(user: model.User) -> model.UserProfile:
-    sub = await get_active_subcribe(user.user_id)
-    # if sub is None:
-    #     raise exception.NoActiveSubscription()
+    sub = await get_active_subscribe(user.user_id)
 
     count = await get_user_models_count(user.user_id)
 
@@ -109,16 +107,16 @@ async def delete_user_from_whitelist(username: str) -> None:
     await finish_active_sub(user_id)
 
 
-async def get_active_subcribe(user_id: str) -> model.UserSubscription | None:
+async def get_active_subscribe(user_id: str) -> model.UserSubscription | None:
     user_sub = await user_repository.get_active_user_subscription(user_id)
 
     return user_sub
 
 
-async def get_referral_info(user_id: str) -> model.UserReferralInfo:
-    referral_joins = await user_repository.count_referral_joins(user_id)
-    referral_purchases = await user_repository.count_referral_purchases(user_id)
-    bonus_generations = await user_repository.get_bonus_generations(user_id)
+async def get_referral_info(referrer_id: str) -> model.UserReferralInfo:
+    referral_joins = await user_repository.count_referral_joins(referrer_id)
+    referral_purchases = await user_repository.count_referral_purchases(referrer_id)
+    bonus_generations = await user_repository.get_bonus_generations(referrer_id)
     return model.UserReferralInfo(
         referral_joins=referral_joins,
         referral_purchases=referral_purchases,
@@ -133,7 +131,7 @@ async def subscribe_user(
     ref_additional = await reward_ref(user_id, subscription_id)
     if ref_additional is not None:
         return model.UserSubscriptionAdditional(
-            referal_info=ref_additional,
+            referral_info=ref_additional,
         )
 
     return None
@@ -207,26 +205,26 @@ async def apply_subscription(user_id: str, subscription_id: int) -> None:
         await user_repository.save_user_subscription(new_user_subscription)
 
 
-async def reward_ref(user_id: str, sub_id: int) -> model.ReferalBonusGenerations | None:
+async def reward_ref(user_id: str, sub_id: int) -> model.ReferralBonusGenerations | None:
     user = await get_user(user_id)
 
-    if user.referral_id is None:
+    if user.referrer_id is None:
         return
 
     ref_sub = await ref_subscription()
 
-    await apply_subscription(user_id, ref_sub.id)
+    await apply_subscription(user.referrer_id, ref_sub.id)
     await add_referral_log(
-        model.ReferalLog(
-            referer_id=user.referral_id,
+        model.ReferralLog(
+            referrer_id=user.referrer_id,
             referral_id=user.user_id,
             subscription_id=sub_id,
             bonus_generations=ref_sub.generation_photos_count,
         )
     )
 
-    return model.ReferalBonusGenerations(
-        referer_id=user.referral_id, bonus_count=ref_sub.generation_photos_count
+    return model.ReferralBonusGenerations(
+        referrer_id=user.referrer_id, bonus_count=ref_sub.generation_photos_count
     )
 
 
@@ -348,7 +346,7 @@ async def is_raise_limits(
 
 
 async def handle_raised_limits(
-    user: model.User, user_subcription: model.UserSubscription, operation: model.OperationType
+    user: model.User, user_subscription: model.UserSubscription, operation: model.OperationType
 ):
     if (
         operation == model.OperationType.GENERATE_BY_IMAGE
@@ -361,7 +359,7 @@ async def handle_raised_limits(
 
         raise exception.OperationOutOfLimitWithPending(
             operation,
-            user_subcription.generation_photos_left,
+            user_subscription.generation_photos_left,
             pending_sub.start_date,
         )
 

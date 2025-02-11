@@ -8,14 +8,13 @@ async def get_active_subscriptions() -> list[model.Subscription]:
 async def get_subscription_details(subscription_id: int) -> model.Subscription:
     subscription = await repository.SubscriptionRepository.get_subscription(subscription_id)
     if subscription is None:
-        raise exception.SubcriptionNotFound()
+        raise exception.SubscriptionNotFound()
     return subscription
 
 
 async def get_subscription_by_name(sub_name: str) -> model.Subscription:
     sub = await repository.SubscriptionRepository.get_subscription_by_name(sub_name)
     if sub is None:
-        raise exception.SubcriptionNotFound()
+        raise exception.SubscriptionNotFound()
 
-    return sub 
-    
+    return sub
