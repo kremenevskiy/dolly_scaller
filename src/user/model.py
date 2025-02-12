@@ -1,5 +1,6 @@
 import datetime
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -24,6 +25,8 @@ class User(BaseModel):
 
     date_joined: datetime.datetime | None = None
 
+    referrer_id: str | None = None
+
     @classmethod
     def from_row(cls, row):
         return cls(
@@ -35,6 +38,7 @@ class User(BaseModel):
             user_type=UserType(row['user_type']),
             models_max=row.get('models_max', 0),
             date_joined=row.get('date_joined'),
+            referrer_id=row.get('referrer_id'),
         )
 
 
@@ -58,6 +62,15 @@ class UserSubscription(BaseModel):
 
     def is_generations_left(self) -> bool:
         return self.generation_photos_left <= 0
+
+
+class ReferralBonusGenerations(BaseModel):
+    referrer_id: str
+    bonus_count: int
+
+
+class UserSubscriptionAdditional(BaseModel):
+    referral_info: Optional[ReferralBonusGenerations] = None
 
 
 # TODO: проверить что и в старах и в рублях проходит через эту схему
@@ -90,7 +103,21 @@ class OperationType(Enum):
     CREATE_MODEL = 'create_model'
 
 
+class UserReferralInfo(BaseModel):
+    referral_joins: int = 0
+    referral_purchases: int = 0
+    bonus_generations: int = 0
+
+
 class UserProfile(BaseModel):
     user: User
-    user_subscription: UserSubscription
+    user_subscription: UserSubscription | None
+    referral_info: UserReferralInfo
     model_count: int
+
+
+class ReferralLog(BaseModel):
+    referrer_id: str
+    referral_id: str
+    subscription_id: int
+    bonus_generations: int

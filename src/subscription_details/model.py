@@ -8,6 +8,7 @@ class SubscriptionType(enum.Enum):
     MONTHLY = 'monthly'
     MODELS = 'models'
     GENERATIONS = 'generations'
+    REFERRAL_GENERATIONS = 'referral_generations'
 
 
 class Subscription(BaseModel):

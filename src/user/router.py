@@ -2,13 +2,9 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from src.exceptions import NotFound
-from src.schemas import OKResponse, OKResponseWithUserID
-from src.user import (
-    model,
-    service,
-)
-from src.user.exception import NoActiveSubscription
 from src.logger import logger
+from src.schemas import OKResponse, OKResponseWithUserID
+from src.user import model, service
 
 user_router = APIRouter(prefix='/user')
 
@@ -18,6 +14,7 @@ async def create_new_user(user_request: model.User) -> OKResponse:
     await service.create_new_user(user_request)
 
     return OKResponse(status=True)
+
 
 # admin
 @user_router.get('/add-whitelist')
@@ -46,27 +43,30 @@ async def find_user(username: str) -> model.UserProfile:
 async def user_profile(user_id: str) -> model.UserProfile:
     user = await service.get_user(user_id)
 
-    sub = await service.get_active_subcribe(user_id)
-    if sub is None:
-        raise NoActiveSubscription()
-
-    count = await service.get_user_models_count(user_id)
-
-    return model.UserProfile(user=user, user_subscription=sub, model_count=count)
+    return await service.get_user_profile(user)
 
 
-class SubcribeRequest(BaseModel):
+class SubscribeRequest(BaseModel):
     subscription_id: int
 
 
+class SubscribeResponse(OKResponse):
+    referral_info: model.ReferralBonusGenerations | None = None
+
+
 @user_router.post('/{user_id}/subscribe')
-async def user_buy_subscription(user_id: str, req: SubcribeRequest) -> OKResponse:
-    await service.subscribe_user(
+async def user_buy_subscription(user_id: str, req: SubscribeRequest) -> SubscribeResponse:
+    resp = SubscribeResponse(status=True)
+
+    additional = await service.subscribe_user(
         user_id=user_id,
         subscription_id=req.subscription_id,
     )
 
-    return OKResponse(status=True)
+    if additional is not None:
+        resp.referral_info = additional.referral_info
+
+    return resp
 
 
 @user_router.post('/{user_id}/add-payment-info')
@@ -81,9 +81,9 @@ async def user_add_payment_info(
     return OKResponse(status=True)
 
 
-@user_router.get('/{user_id}/subcription')
+@user_router.get('/{user_id}/subscription')
 async def active_subscription(user_id: str) -> OKResponse:
-    sub = await service.get_active_subcribe(user_id)
+    sub = await service.get_active_subscribe(user_id)
     if sub is None:
         raise NotFound()
 
@@ -110,7 +110,7 @@ async def add_user_limits(user_id: str, req: UpdateLimitsRequest) -> OKResponse:
 
 
 @user_router.post('/{user_id}/refund')
-async def refund_user(user_id: str, req: SubcribeRequest) -> OKResponse:
+async def refund_user(user_id: str, req: SubscribeRequest) -> OKResponse:
     await service.refund_user(user_id, req.subscription_id)
 
     return OKResponse(status=True)
