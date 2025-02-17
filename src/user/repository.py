@@ -202,7 +202,7 @@ class UserRepository:
         # Update subscription details
         update_subscription_query = """
             UPDATE user_subscriptions
-            SET generation_photos_left = $1
+            SET generation_photos_left = generation_photos_left - 1
             WHERE user_id = $2 AND status = 'active';
         """
         await DatabaseManager.execute(
