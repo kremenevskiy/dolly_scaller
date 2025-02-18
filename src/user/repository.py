@@ -1,10 +1,35 @@
+from contextlib import asynccontextmanager
 import json
+
+from asyncpg.connection import asyncio, asyncpg
 
 from src.database import DatabaseManager
 from src.user import model
 
 
 class UserRepository:
+
+    @staticmethod
+    @asynccontextmanager
+    async def tx():
+        async with DatabaseManager.tx('read_commited'):
+            yield
+
+    @staticmethod
+    @asynccontextmanager
+    async def rep_tx(retries: int = 5):
+        for attempt in range(retries):
+            try:
+                async with DatabaseManager.tx('repeatable_read'):
+                    yield
+                return
+            except asyncpg.exceptions.SerializationError:
+                if attempt == retries - 1:
+                    raise
+
+                # 0.1s → 0.2s → 0.4s
+                await asyncio.sleep(0.1 * (2 ** attempt))
+
     @staticmethod
     async def create_new_user(user: model.User) -> None:
         query = """
@@ -196,7 +221,7 @@ class UserRepository:
         )
 
     @staticmethod
-    async def update_user_subscription(
+    async def decrement_generation_count_left(
         user_subscription: model.UserSubscription,
     ) -> None:
         # Update subscription details
