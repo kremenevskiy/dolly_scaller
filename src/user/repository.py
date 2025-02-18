@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 import json
 
 from src.database import DatabaseManager
@@ -5,6 +6,13 @@ from src.user import model
 
 
 class UserRepository:
+
+    @staticmethod
+    @asynccontextmanager
+    async def tx():
+        async with DatabaseManager.tx('repeatable_read'):
+            yield
+
     @staticmethod
     async def create_new_user(user: model.User) -> None:
         query = """
